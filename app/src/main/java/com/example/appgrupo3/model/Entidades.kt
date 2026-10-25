@@ -110,3 +110,52 @@ data class Protocolo(
 ) {
     fun prueba(tipo: TipoPrueba): Prueba? = pruebas.firstOrNull { it.tipo == tipo }
 }
+
+data class Sistema(
+    val clientes: List<Cliente> = emptyList(),
+    val instalaciones: List<Instalacion> = emptyList(),
+    val equipos: List<Equipo> = emptyList(),
+    val usuarios: List<Usuario> = emptyList(),
+    val instrumentos: List<Instrumento> = emptyList(),
+    val visitas: List<Visita> = emptyList(),
+    val protocolos: List<Protocolo> = emptyList(),
+    val dispositivo: String = "A1"
+) {
+    fun cliente(rut: String?): Cliente? = clientes.firstOrNull { it.rut == rut }
+    fun instalacion(id: String?): Instalacion? = instalaciones.firstOrNull { it.id == id }
+    fun equipo(id: String?): Equipo? = equipos.firstOrNull { it.id == id }
+    fun usuario(rut: String?): Usuario? = usuarios.firstOrNull { it.rut == rut }
+    fun instrumento(serie: String?): Instrumento? = instrumentos.firstOrNull { it.serie == serie }
+    fun visita(numero: String?): Visita? = visitas.firstOrNull { it.numero == numero }
+    fun protocolo(numero: String?): Protocolo? = protocolos.firstOrNull { it.numero == numero }
+
+    fun nombre(rut: String?): String = usuario(rut)?.nombre ?: "—"
+
+    fun clienteDeEquipo(equipo: Equipo): Cliente? = cliente(instalacion(equipo.instalacionId)?.clienteRut)
+
+    fun clienteDeProtocolo(protocolo: Protocolo): Cliente? = equipo(protocolo.equipoId)?.let { clienteDeEquipo(it) }
+
+    fun protocolosDeVisita(numero: String): List<Protocolo> =
+        protocolos.filter { it.visitaNumero == numero }.sortedBy { it.numero }
+
+    fun historialEquipo(equipoId: String): List<Protocolo> =
+        protocolos.filter { it.equipoId == equipoId }.sortedByDescending { it.fechaHora }
+
+    fun protocoloAnterior(protocolo: Protocolo): Protocolo? =
+        protocolos
+            .filter {
+                it.equipoId == protocolo.equipoId &&
+                    it.numero != protocolo.numero &&
+                    it.fechaHora < protocolo.fechaHora &&
+                    it.estado != EstadoProtocolo.ANULADO &&
+                    it.estado != EstadoProtocolo.BORRADOR &&
+                    it.reemplazadoPor == null
+            }
+            .maxByOrNull { it.fechaHora }
+
+    fun ultimoProtocolo(equipoId: String): Protocolo? =
+        historialEquipo(equipoId).firstOrNull { it.estado != EstadoProtocolo.ANULADO }
+
+    val tecnicos: List<Usuario> get() = usuarios.filter { it.perfil == Perfil.TECNICO || it.perfil == Perfil.INGENIERO }
+    val ingenieros: List<Usuario> get() = usuarios.filter { it.perfil == Perfil.INGENIERO && it.activo }
+}
