@@ -304,4 +304,48 @@ fun ProtocoloScreen(
             }
         }
     }
+
+    when (dialogo) {
+        Dialogo.OBSERVAR -> DialogoMotivo(
+            titulo = "Observar protocolo",
+            descripcion = "El técnico deberá corregirlo y volver a registrarlo.",
+            textoConfirmar = "Observar",
+            onConfirmar = { motivo ->
+                dialogo = null
+                app.cambiarEstado(numero, EstadoProtocolo.OBSERVADO, motivo)
+            },
+            onCancelar = { dialogo = null }
+        )
+        Dialogo.ANULAR -> DialogoMotivo(
+            titulo = "Anular protocolo",
+            descripcion = "El protocolo quedará en el historial como Anulado.",
+            textoConfirmar = "Anular",
+            onConfirmar = { motivo ->
+                dialogo = null
+                app.cambiarEstado(numero, EstadoProtocolo.ANULADO, motivo)
+            },
+            onCancelar = { dialogo = null }
+        )
+        Dialogo.FORMALIZAR -> DialogoConfirmar(
+            titulo = "Formalizar protocolo",
+            texto = "Una vez formalizado no se puede modificar ni anular. Si luego detectas un error deberás emitir un reemplazo.",
+            textoConfirmar = "Formalizar",
+            onConfirmar = {
+                dialogo = null
+                app.cambiarEstado(numero, EstadoProtocolo.FORMALIZADO)
+            },
+            onCancelar = { dialogo = null }
+        )
+        Dialogo.REEMPLAZAR -> DialogoConfirmar(
+            titulo = "Emitir protocolo de reemplazo",
+            texto = "Se creará un protocolo nuevo en Borrador con los mismos datos. El original quedará marcado como reemplazado.",
+            textoConfirmar = "Emitir",
+            onConfirmar = {
+                dialogo = null
+                app.emitirReemplazo(numero) { onProtocolo(it.numero) }
+            },
+            onCancelar = { dialogo = null }
+        )
+        null -> Unit
+    }
 }
