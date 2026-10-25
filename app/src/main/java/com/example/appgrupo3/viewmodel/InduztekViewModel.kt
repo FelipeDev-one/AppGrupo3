@@ -190,7 +190,6 @@ class InduztekViewModel(application: Application) : AndroidViewModel(application
 
     fun guardarEquipo(
         equipo: Equipo,
-        ignorarDuplicado: Boolean,
         onDuplicado: (Equipo) -> Unit,
         onExito: () -> Unit
     ) = ejecutar<Unit>(
@@ -202,7 +201,7 @@ class InduztekViewModel(application: Application) : AndroidViewModel(application
                 true
             } else false
         }
-    ) { s, u -> Operaciones.guardarEquipo(s, equipo, u, ignorarDuplicado) to Unit }
+    ) { s, u -> Operaciones.guardarEquipo(s, equipo, u) to Unit }
 
     fun guardarCliente(cliente: Cliente, esNuevo: Boolean, onExito: () -> Unit) =
         ejecutarSimple("Cliente guardado", onExito) { s, u -> Operaciones.guardarCliente(s, cliente, u, esNuevo) }

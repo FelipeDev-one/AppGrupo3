@@ -183,11 +183,11 @@ object Operaciones {
         return s.copy(visitas = s.visitas.map { if (it.numero == visitaNumero) cerrada else it })
     }
 
-    fun guardarEquipo(s: Sistema, equipo: Equipo, usuario: Usuario, ignorarDuplicado: Boolean = false): Sistema {
+    fun guardarEquipo(s: Sistema, equipo: Equipo, usuario: Usuario): Sistema {
         exigir(Reglas.puedeRegistrarDatos(usuario), "Tu perfil no puede registrar equipos")
         exigir(s.instalacion(equipo.instalacionId) != null, "La instalación no existe")
         val duplicado = Reglas.tagDuplicado(s.equipos, equipo.instalacionId, equipo.tag, equipo.id)
-        if (duplicado != null && !ignorarDuplicado) throw TagDuplicadoException(duplicado)
+        if (duplicado != null) throw TagDuplicadoException(duplicado)
         val existe = s.equipos.any { it.id == equipo.id }
         val lista = if (existe) s.equipos.map { if (it.id == equipo.id) equipo else it } else s.equipos + equipo
         return s.copy(equipos = lista)
