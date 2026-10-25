@@ -215,6 +215,68 @@ fun ProtocoloScreen(
                     }
                 }
 
+                SeccionTarjeta("Pruebas (${equipo.tipo.etiqueta})", Icons.Filled.Science) {
+                    p.pruebas.forEach { prueba ->
+                        val resultado = Calculos.resultado(prueba, equipo)
+                        val faltan = Calculos.faltantes(prueba, equipo)
+                        val instrumento = s.instrumento(prueba.instrumentoSerie)
+                        val calibracion = instrumento?.let { Reglas.estadoCalibracion(it, Tiempo.aFecha(p.fechaHora)) }
+                        Card(
+                            onClick = { if (editable) onPrueba(prueba.tipo) },
+                            enabled = editable,
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                disabledContentColor = MaterialTheme.colorScheme.onSurface
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(Modifier.padding(Dimens.espacioMedio), verticalArrangement = Arrangement.spacedBy(Dimens.espacioMini)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(prueba.tipo.etiqueta, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                                    when {
+                                        !prueba.realizada -> Etiqueta("No realizada", Tono.NEUTRO)
+                                        resultado != null -> EtiquetaResultado(resultado)
+                                        else -> Etiqueta("Incompleta", Tono.NEUTRO)
+                                    }
+                                    if (editable) Icon(Icons.Filled.ChevronRight, contentDescription = "Editar prueba")
+                                }
+                                if (!prueba.realizada) Text("Motivo: ${prueba.motivoNoRealizada}", style = MaterialTheme.typography.bodyMedium)
+                                Calculos.detalle(prueba, equipo).forEach { Text(it, style = MaterialTheme.typography.bodyMedium) }
+                                if (prueba.realizada && instrumento != null) {
+                                    Text(
+                                        "Instrumento: ${instrumento.nombre} ${instrumento.serie} (vence ${Tiempo.fechaLegible(instrumento.vencimiento)})",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    if (calibracion == EstadoCalibracion.VENCIDO && !esCliente) {
+                                        Etiqueta("Calibración vencida a la fecha de la prueba (RN-11)", Tono.RECHAZADO, Icons.Filled.Warning)
+                                    }
+                                }
+                                if (prueba.valoresPrevios != null) {
+                                    Text(
+                                        "Medición previa al mantenimiento: ${prueba.resultadoPrevio?.etiqueta ?: "sin resultado"} · vale la posterior",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                if (faltan.isNotEmpty() && !esCliente) {
+                                    Text(
+                                        "Falta: " + faltan.joinToString(", "),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                                if (prueba.tipo == TipoPrueba.DEVANADOS && prueba.realizada && Reglas.puedeDefinirResultadoManual(p, u)) {
+                                    ResultadoManual(prueba.resultadoManual) { r ->
+                                        app.definirResultadoManual(p.numero, prueba.tipo, r)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
                 Comparacion(comparacion, anterior)
 
                 ComentarioIngeniero(p, u, datos.comentario, datos.errorComentario, comparacion.any { it.significativa }, viewModel::onComentario) {
