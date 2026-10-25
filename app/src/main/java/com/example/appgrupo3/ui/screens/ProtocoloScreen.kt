@@ -154,20 +154,18 @@ fun ProtocoloScreen(
                             CampoTexto(
                                 valor = datos.temperatura,
                                 onCambio = viewModel::onTemperatura,
-                                etiqueta = "Temperatura",
+                                etiqueta = "T° (°C)",
                                 icono = Icons.Filled.Thermostat,
                                 error = datos.errorTemperatura,
-                                placeholder = "°C",
                                 opcionesTeclado = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                 modifier = Modifier.weight(1f)
                             )
                             CampoTexto(
                                 valor = datos.humedad,
                                 onCambio = viewModel::onHumedad,
-                                etiqueta = "Humedad",
+                                etiqueta = "HR (%)",
                                 icono = Icons.Filled.WaterDrop,
                                 error = datos.errorHumedad,
-                                placeholder = "%",
                                 opcionesTeclado = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                 modifier = Modifier.weight(1f)
                             )
@@ -449,7 +447,7 @@ private fun Comparacion(comparacion: List<ComparacionPrueba>, anterior: Protocol
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Text(v.campo.etiqueta, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
                     Text(
-                        "${Formato.numero(v.anterior)} → ${Formato.numero(v.actual)} ${v.campo.unidad}  ",
+                        "${Formato.numero(v.anterior, 3)} → ${Formato.numero(v.actual, 3)} ${v.campo.unidad}  ",
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Etiqueta(Formato.porcentaje(v.porcentaje), tono)
