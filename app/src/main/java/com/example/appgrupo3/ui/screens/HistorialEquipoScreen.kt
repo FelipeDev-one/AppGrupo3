@@ -140,3 +140,50 @@ fun HistorialEquipoScreen(
         }
     }
 }
+
+private fun tituloGrafico(equipo: Equipo): String = when (equipo.tipo) {
+    TipoEquipo.RELE -> "Evolución del tiempo de operación (ms)"
+    else -> "Evolución de la aislación a 1 min (MΩ)"
+}
+
+private fun valorPrincipal(p: Protocolo, equipo: Equipo): Double? {
+    if (equipo.tipo == TipoEquipo.RELE) return p.prueba(TipoPrueba.OPERACION_RELE)?.valores?.get("t_medido")
+    val prueba = p.prueba(TipoPrueba.AISLACION)?.takeIf { it.realizada } ?: return null
+    val claves = Catalogo.paresAislacion(equipo.tipo).map { it.claveUnMinuto }
+    return claves.mapNotNull { prueba.valores[it] }.minOrNull()
+}
+
+@Composable
+private fun GraficoEvolucion(serie: List<Pair<Protocolo, Double>>, equipo: Equipo) {
+    val progreso = remember { Animatable(0f) }
+    LaunchedEffect(serie.size) { progreso.animateTo(1f, tween(900)) }
+    val maximo = serie.maxOf { it.second }
+    val coloresBarras = serie.map { (p, _) -> colores(tonoDe(Calculos.global(p, equipo))).texto }
+    val fondo = MaterialTheme.colorScheme.outlineVariant
+
+    Canvas(
+        Modifier
+            .fillMaxWidth()
+            .height(160.dp)
+    ) {
+        val ancho = size.width / serie.size
+        val barra = ancho * 0.55f
+        drawLine(fondo, Offset(0f, size.height), Offset(size.width, size.height), strokeWidth = 2f)
+        serie.forEachIndexed { i, (_, valor) ->
+            val alto = (valor / maximo).toFloat() * size.height * 0.95f * progreso.value
+            drawRect(
+                color = coloresBarras[i],
+                topLeft = Offset(i * ancho + (ancho - barra) / 2, size.height - alto),
+                size = Size(barra, alto)
+            )
+        }
+    }
+    Row(Modifier.fillMaxWidth()) {
+        serie.forEach { (p, valor) ->
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(Formato.numero(valor, 0), style = MaterialTheme.typography.labelLarge)
+                Text(Tiempo.fecha(p.fechaHora).takeLast(4), style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+    }
+}
