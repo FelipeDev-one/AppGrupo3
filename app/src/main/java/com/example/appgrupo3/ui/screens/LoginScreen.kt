@@ -52,6 +52,9 @@ import com.example.appgrupo3.ui.theme.Dimens
 import com.example.appgrupo3.viewmodel.InduztekViewModel
 import com.example.appgrupo3.viewmodel.LoginViewModel
 
+// true = muestra botones para elegir un usuario de prueba (solo para demostraciones).
+private const val MOSTRAR_USUARIOS_PRUEBA = false
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun LoginScreen(
@@ -127,21 +130,23 @@ fun LoginScreen(
                 Text("  " + stringResource(R.string.btn_ingresar))
             }
 
-            val usuarios = sistema?.usuarios?.filter { it.activo }.orEmpty()
-            listOf(
-                "Personal Induztek" to usuarios.filter { it.perfil != Perfil.CLIENTE },
-                "Usuarios cliente" to usuarios.filter { it.perfil == Perfil.CLIENTE }
-            ).forEach { (grupo, lista) ->
-                Text(grupo, style = MaterialTheme.typography.titleMedium, modifier = Modifier.fillMaxWidth())
-                FlowRow(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(Dimens.espacioChico)
-                ) {
-                    lista.forEach { u ->
-                        AssistChip(
-                            onClick = { viewModel.elegir(u) },
-                            label = { Text("${u.nombre.substringBefore(" ")} · ${u.perfil.etiqueta}") }
-                        )
+            if (MOSTRAR_USUARIOS_PRUEBA) {
+                val usuarios = sistema?.usuarios?.filter { it.activo }.orEmpty()
+                listOf(
+                    "Personal Induztek" to usuarios.filter { it.perfil != Perfil.CLIENTE },
+                    "Usuarios cliente" to usuarios.filter { it.perfil == Perfil.CLIENTE }
+                ).forEach { (grupo, lista) ->
+                    Text(grupo, style = MaterialTheme.typography.titleMedium, modifier = Modifier.fillMaxWidth())
+                    FlowRow(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(Dimens.espacioChico)
+                    ) {
+                        lista.forEach { u ->
+                            AssistChip(
+                                onClick = { viewModel.elegir(u) },
+                                label = { Text("${u.nombre.substringBefore(" ")} · ${u.perfil.etiqueta}") }
+                            )
+                        }
                     }
                 }
             }
