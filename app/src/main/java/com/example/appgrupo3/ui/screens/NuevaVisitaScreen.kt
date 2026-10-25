@@ -111,7 +111,7 @@ fun NuevaVisitaScreen(
                             selected = estado.tipo == tipo,
                             onClick = { viewModel.onTipo(tipo) },
                             shape = SegmentedButtonDefaults.itemShape(i, TipoVisita.entries.size)
-                        ) { Text(tipo.etiqueta) }
+                        ) { Text(tipo.etiqueta, style = MaterialTheme.typography.bodyMedium) }
                     }
                 }
                 Selector(
