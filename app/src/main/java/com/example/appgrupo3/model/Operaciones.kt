@@ -114,4 +114,72 @@ object Operaciones {
         exigir(Reglas.puedeDefinirResultadoManual(p, usuario), "Solo el ingeniero o jefe técnico puede comentar")
         return reemplazar(s, p.copy(comentarioIngeniero = comentario.trim()))
     }
+
+    fun cambiarEstado(
+        s: Sistema,
+        numero: String,
+        hacia: EstadoProtocolo,
+        motivo: String,
+        usuario: Usuario,
+        ahora: Long
+    ): Sistema {
+        val p = protocoloOError(s, numero)
+        val equipo = equipoOError(s, p.equipoId)
+        exigir(Reglas.transicionPermitida(p.estado, hacia), "No se puede pasar de ${p.estado.etiqueta} a ${hacia.etiqueta} (RN-04)")
+        exigir(Reglas.puedeCambiar(p, hacia, usuario), "Tu perfil no puede dejar el protocolo en ${hacia.etiqueta}")
+        if (Reglas.requiereMotivo(hacia)) exigir(motivo.isNotBlank(), "El motivo es obligatorio")
+        when (hacia) {
+            EstadoProtocolo.REGISTRADO -> {
+                val faltan = Reglas.faltantesRegistro(p, equipo)
+                exigir(faltan.isEmpty(), "Falta completar: " + faltan.joinToString(", "))
+            }
+            EstadoProtocolo.FORMALIZADO -> {
+                val comparacion = Calculos.comparar(p, s.protocoloAnterior(p), equipo)
+                val faltan = Reglas.faltantesFormalizacion(p, equipo, comparacion)
+                exigir(faltan.isEmpty(), "Falta completar: " + faltan.joinToString(", "))
+            }
+            else -> Unit
+        }
+        val cambio = CambioEstado(p.estado, hacia, usuario.rut, ahora, motivo.trim())
+        val nuevo = p.copy(
+            estado = hacia,
+            motivoObservacion = if (hacia == EstadoProtocolo.OBSERVADO) motivo.trim() else p.motivoObservacion,
+            motivoAnulacion = if (hacia == EstadoProtocolo.ANULADO) motivo.trim() else p.motivoAnulacion,
+            historial = p.historial + cambio
+        )
+        return reemplazar(s, nuevo)
+    }
+
+    fun emitirReemplazo(s: Sistema, numero: String, usuario: Usuario, ahora: Long): Pair<Sistema, Protocolo> {
+        val original = protocoloOError(s, numero)
+        exigir(Reglas.puedeReemplazar(original, usuario), "Solo se reemplaza un protocolo formalizado, por ingeniero o jefe técnico")
+        val anio = Tiempo.aFecha(ahora).year
+        val nuevoNumero = Reglas.siguienteNumero("PT", s.protocolos.map { it.numero }, anio, s.dispositivo)
+        val nuevo = original.copy(
+            numero = nuevoNumero,
+            estado = EstadoProtocolo.BORRADOR,
+            tecnicoRut = usuario.rut,
+            motivoObservacion = "",
+            motivoAnulacion = "",
+            reemplazaA = original.numero,
+            reemplazadoPor = null,
+            historial = listOf(CambioEstado(null, EstadoProtocolo.BORRADOR, usuario.rut, ahora, "Reemplaza a ${original.numero}"))
+        )
+        val marcado = original.copy(reemplazadoPor = nuevoNumero)
+        val lista = s.protocolos.map { if (it.numero == original.numero) marcado else it } + nuevo
+        return s.copy(protocolos = lista) to nuevo
+    }
+
+    fun cerrarVisita(s: Sistema, visitaNumero: String, recepcion: Recepcion, usuario: Usuario): Sistema {
+        exigir(Reglas.puedeCerrarVisita(usuario), "Solo técnico o ingeniero cierran la visita")
+        val visita = s.visita(visitaNumero) ?: throw ReglaNegocioException("La visita no existe")
+        exigir(!visita.cerrada, "La visita ya está cerrada")
+        val protocolos = s.protocolosDeVisita(visitaNumero)
+        exigir(protocolos.any { it.estado != EstadoProtocolo.ANULADO }, "La visita no tiene protocolos")
+        val pendientes = Reglas.pendientesCierre(protocolos)
+        exigir(pendientes.isEmpty(), "Faltan por registrar: " + pendientes.joinToString(", ") { it.numero } + " (RN-13)")
+        exigir(RutValidator.esValido(recepcion.rut), "El RUT de quien recibe no es válido (RN-03)")
+        val cerrada = visita.copy(recepcion = recepcion.copy(rut = RutValidator.formatear(recepcion.rut)))
+        return s.copy(visitas = s.visitas.map { if (it.numero == visitaNumero) cerrada else it })
+    }
 }
