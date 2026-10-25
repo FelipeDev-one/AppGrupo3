@@ -57,4 +57,70 @@ object Calculos {
     }
 
     fun peor(resultados: List<Resultado>): Resultado? = resultados.maxByOrNull { it.gravedad }
+
+    fun faltantes(prueba: Prueba, equipo: Equipo): List<String> {
+        if (!prueba.realizada) {
+            return if (prueba.motivoNoRealizada.isBlank()) listOf("motivo de no realización") else emptyList()
+        }
+        val lista = mutableListOf<String>()
+        if (prueba.instrumentoSerie == null) lista += "instrumento"
+        if (Catalogo.usaTension(prueba.tipo) && prueba.tensionKv == null) lista += "tensión de prueba"
+        Catalogo.campos(prueba.tipo, equipo.tipo).forEach { campo ->
+            val omitible = campo.opcional && prueba.noOpera
+            if (!omitible && prueba.valores[campo.clave] == null) lista += campo.etiqueta
+        }
+        if (prueba.tipo == TipoPrueba.CONTACTOS && equipo.contactoMaximo == null) lista += "máximo de placa del equipo"
+        return lista
+    }
+
+    fun estaCompleta(prueba: Prueba, equipo: Equipo): Boolean = faltantes(prueba, equipo).isEmpty()
+
+    fun resultado(prueba: Prueba, equipo: Equipo): Resultado? {
+        if (!prueba.realizada) return null
+        return resultadoDeValores(prueba.tipo, prueba.valores, prueba.noOpera, prueba.resultadoManual, equipo)
+    }
+
+    fun resultadoDeValores(
+        tipo: TipoPrueba,
+        valores: Map<String, Double>,
+        noOpera: Boolean,
+        manual: Resultado?,
+        equipo: Equipo
+    ): Resultado? = when (tipo) {
+        TipoPrueba.AISLACION -> resultadoAislacion(valores, equipo.tipo)
+        TipoPrueba.TTR -> {
+            val teorica = valores["teorica"]
+            val medida = valores["medida"]
+            if (teorica == null || medida == null || teorica <= 0) null
+            else clasificarErrorTtr(errorTtr(teorica, medida))
+        }
+        TipoPrueba.DEVANADOS -> manual
+        TipoPrueba.CONTACTOS -> {
+            val maximo = equipo.contactoMaximo
+            val polos = (1..3).map { valores["P$it"] }
+            if (maximo == null || maximo <= 0 || polos.any { it == null }) null
+            else clasificarContactos(porcentajeContactos(polos.maxOf { it!! }, maximo))
+        }
+        TipoPrueba.OPERACION_RELE -> {
+            val esperado = valores["t_esperado"]
+            val medido = valores["t_medido"]
+            when {
+                noOpera -> Resultado.RECHAZADO
+                esperado == null || medido == null || esperado <= 0 -> null
+                else -> clasificarRele(diferenciaRele(esperado, medido))
+            }
+        }
+    }
+
+    private fun resultadoAislacion(valores: Map<String, Double>, tipo: TipoEquipo): Resultado? {
+        val pares = Catalogo.paresAislacion(tipo)
+        val resultados = pares.map { par ->
+            val uno = valores[par.claveUnMinuto] ?: return null
+            if (uno < LECTURA_MINIMA_MOHM) return@map Resultado.RECHAZADO
+            val claveDiez = par.claveDiezMinutos ?: return@map Resultado.APROBADO
+            val diez = valores[claveDiez] ?: return null
+            clasificarIp(indicePolarizacion(uno, diez))
+        }
+        return peor(resultados)
+    }
 }
