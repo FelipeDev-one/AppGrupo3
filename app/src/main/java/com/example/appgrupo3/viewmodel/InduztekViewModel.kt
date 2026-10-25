@@ -157,14 +157,16 @@ class InduztekViewModel(application: Application) : AndroidViewModel(application
         }
 
     fun cambiarEstado(numero: String, hacia: EstadoProtocolo, motivo: String = "", onExito: () -> Unit = {}) =
-        ejecutarSimple("Protocolo ${hacia.etiqueta.lowercase()}", {
-            avisarSiCorresponde(numero, hacia)
+        ejecutar<Sistema>("Protocolo ${hacia.etiqueta.lowercase()}", { nuevo ->
+            avisarSiCorresponde(nuevo, numero, hacia)
             onExito()
-        }) { s, u -> Operaciones.cambiarEstado(s, numero, hacia, motivo, u, System.currentTimeMillis()) }
+        }) { s, u ->
+            val nuevo = Operaciones.cambiarEstado(s, numero, hacia, motivo, u, System.currentTimeMillis())
+            nuevo to nuevo
+        }
 
-    private fun avisarSiCorresponde(numero: String, hacia: EstadoProtocolo) {
+    private fun avisarSiCorresponde(s: Sistema, numero: String, hacia: EstadoProtocolo) {
         if (hacia != EstadoProtocolo.REGISTRADO) return
-        val s = sistema.value ?: return
         val p = s.protocolo(numero) ?: return
         val equipo = s.equipo(p.equipoId) ?: return
         val rechazado = Calculos.global(p, equipo) == Resultado.RECHAZADO
