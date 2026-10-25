@@ -42,6 +42,14 @@ class BusquedaViewModel : ViewModel() {
         return listOf(equipo.tag, equipo.serie, instalacion).any { it.contains(texto.trim(), ignoreCase = true) }
     }
 
+    private fun coincideEstado(p: Protocolo, estado: EstadoProtocolo?, usuario: Usuario): Boolean {
+        if (estado == null) return true
+        if (usuario.clienteRut != null && estado == EstadoProtocolo.REGISTRADO) {
+            return p.estado == EstadoProtocolo.REGISTRADO || p.estado == EstadoProtocolo.OBSERVADO
+        }
+        return p.estado == estado
+    }
+
     fun protocolos(s: Sistema, usuario: Usuario, hoy: LocalDate): List<Protocolo> {
         val f = _filtros.value
         return s.protocolos
@@ -50,7 +58,7 @@ class BusquedaViewModel : ViewModel() {
                 val cliente = equipo?.let { s.clienteDeEquipo(it) }
                 val visibleCliente = usuario.clienteRut == null || (cliente?.rut == usuario.clienteRut && Reglas.visibleParaCliente(p))
                 visibleCliente &&
-                    (f.estado == null || p.estado == f.estado) &&
+                    coincideEstado(p, f.estado, usuario) &&
                     (f.clienteRut == null || cliente?.rut == f.clienteRut) &&
                     (f.tecnicoRut == null || p.tecnicoRut == f.tecnicoRut) &&
                     (!f.soloAtrasados || Reglas.estaAtrasado(p, hoy)) &&
