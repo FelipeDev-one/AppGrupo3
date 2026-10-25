@@ -119,4 +119,151 @@ object DatosEjemplo {
             Recepcion("Tomás Leiva Araya", "18.390.452-3", "Supervisor Eléctrico", Tiempo.millis(2026, 9, 20, 9, 55))
         )
     )
+
+    private fun aislacionTrafo(atBt: Pair<Double, Double>, atT: Pair<Double, Double>, btT: Pair<Double, Double>) = Prueba(
+        tipo = TipoPrueba.AISLACION,
+        instrumentoSerie = MEGGER_5KV,
+        tensionKv = 5.0,
+        unidad = UnidadAislacion.MEGA,
+        valores = mapOf(
+            "AT-BT_1" to atBt.first, "AT-BT_10" to atBt.second,
+            "AT-T_1" to atT.first, "AT-T_10" to atT.second,
+            "BT-T_1" to btT.first, "BT-T_10" to btT.second
+        )
+    )
+
+    private fun ttr(h1: Double, h2: Double, h3: Double, tap: Double = 3.0) = Prueba(
+        tipo = TipoPrueba.TTR,
+        instrumentoSerie = TTR300,
+        valores = mapOf("teorica" to 30.0, "H1-X1" to h1, "H2-X2" to h2, "H3-X3" to h3, "tap" to tap)
+    )
+
+    private fun devanados(at: List<Double>, bt: List<Double>, resultado: Resultado?) = Prueba(
+        tipo = TipoPrueba.DEVANADOS,
+        instrumentoSerie = DLRO,
+        valores = mapOf(
+            "AT_R" to at[0], "AT_S" to at[1], "AT_T" to at[2],
+            "BT_R" to bt[0], "BT_S" to bt[1], "BT_T" to bt[2]
+        ),
+        resultadoManual = resultado
+    )
+
+    private fun historial(vararg cambios: Pair<EstadoProtocolo, Long>, rut: String, motivo: String = ""): List<CambioEstado> {
+        var anterior: EstadoProtocolo? = null
+        return cambios.map { (estado, fecha) ->
+            val cambio = CambioEstado(anterior, estado, rut, fecha, if (estado == EstadoProtocolo.OBSERVADO) motivo else "")
+            anterior = estado
+            cambio
+        }
+    }
+
+    private val protocolos: List<Protocolo> = run {
+        val f2024 = Tiempo.millis(2024, 9, 14, 10, 0)
+        val f2025 = Tiempo.millis(2025, 9, 13, 10, 30)
+        val f0401 = Tiempo.millis(2026, 9, 26, 9, 40)
+        val f0402 = Tiempo.millis(2026, 9, 26, 11, 15)
+        val f0389 = Tiempo.millis(2026, 9, 20, 7, 30)
+        val f0377 = Tiempo.millis(2026, 9, 15, 10, 0)
+        val f0360 = Tiempo.millis(2026, 9, 8, 9, 0)
+        val dia = 86_400_000L
+        listOf(
+            Protocolo(
+                numero = "PT-2024-0312", visitaNumero = null, equipoId = "EQ-01", fechaHora = f2024, tecnicoRut = GODOY,
+                temperatura = 18.0, humedad = 55.0,
+                pruebas = listOf(
+                    aislacionTrafo(11000.0 to 26400.0, 12500.0 to 31250.0, 5200.0 to 12480.0),
+                    ttr(30.02, 30.03, 30.01),
+                    devanados(listOf(1838.0, 1845.0, 1836.0), listOf(0.410, 0.407, 0.412), Resultado.APROBADO)
+                ),
+                estado = EstadoProtocolo.FORMALIZADO,
+                historial = historial(
+                    EstadoProtocolo.BORRADOR to f2024, EstadoProtocolo.REGISTRADO to f2024 + 3_600_000,
+                    EstadoProtocolo.FORMALIZADO to f2024 + dia * 2, rut = CONTRERAS
+                )
+            ),
+            Protocolo(
+                numero = "PT-2025-0288", visitaNumero = null, equipoId = "EQ-01", fechaHora = f2025, tecnicoRut = TAPIA,
+                temperatura = 21.0, humedad = 48.0,
+                pruebas = listOf(
+                    aislacionTrafo(9500.0 to 21850.0, 9800.0 to 21560.0, 4300.0 to 9890.0),
+                    ttr(30.03, 30.04, 30.02),
+                    devanados(listOf(1840.0, 1848.0, 1838.0), listOf(0.411, 0.408, 0.414), Resultado.APROBADO)
+                ),
+                estado = EstadoProtocolo.FORMALIZADO,
+                historial = historial(
+                    EstadoProtocolo.BORRADOR to f2025, EstadoProtocolo.REGISTRADO to f2025 + 3_600_000,
+                    EstadoProtocolo.FORMALIZADO to f2025 + dia, rut = CONTRERAS
+                )
+            ),
+            Protocolo(
+                numero = "PT-2026-0401", visitaNumero = "OT-2026-1187", equipoId = "EQ-01", fechaHora = f0401, tecnicoRut = GODOY,
+                temperatura = 19.0, humedad = 60.0,
+                pruebas = listOf(
+                    aislacionTrafo(5800.0 to 11200.0, 6100.0 to 10980.0, 3200.0 to 6900.0).copy(unidad = UnidadAislacion.GIGA),
+                    ttr(30.04, 30.06, 29.98),
+                    devanados(listOf(1842.0, 1850.0, 1839.0), listOf(0.412, 0.409, 0.415), null)
+                ),
+                estado = EstadoProtocolo.REGISTRADO,
+                observaciones = "IP bajo en AT-T respecto del año anterior. Leve suciedad en aisladores BT.",
+                mantenimiento = "Limpieza de aisladores BT. No se repitió la medición por término de la ventana de corte.",
+                historial = historial(EstadoProtocolo.BORRADOR to f0401, EstadoProtocolo.REGISTRADO to f0401 + 3 * 3_600_000, rut = GODOY)
+            ),
+            Protocolo(
+                numero = "PT-2026-0402", visitaNumero = "OT-2026-1187", equipoId = "EQ-02", fechaHora = f0402, tecnicoRut = GODOY,
+                temperatura = 19.0, humedad = 60.0,
+                pruebas = listOf(
+                    aislacionTrafo(8200.0 to 19680.0, 8900.0 to 21360.0, 4100.0 to 9430.0),
+                    ttr(30.02, 30.01, 30.03),
+                    devanados(listOf(2010.0, 2016.0, 2008.0), listOf(0.520, 0.518, 0.522), null)
+                ),
+                estado = EstadoProtocolo.REGISTRADO,
+                mantenimiento = "Reapriete de conexiones en bornes BT.",
+                historial = historial(EstadoProtocolo.BORRADOR to f0402, EstadoProtocolo.REGISTRADO to f0402 + 2 * 3_600_000, rut = GODOY)
+            ),
+            Protocolo(
+                numero = "PT-2026-0389", visitaNumero = "OT-2026-1154", equipoId = "EQ-04", fechaHora = f0389, tecnicoRut = RONDON,
+                temperatura = 22.0, humedad = 45.0,
+                pruebas = listOf(
+                    Prueba(TipoPrueba.AISLACION, instrumentoSerie = MEGGER_5KV, tensionKv = 5.0, valores = mapOf("L_1" to 25000.0)),
+                    Prueba(TipoPrueba.CONTACTOS, instrumentoSerie = null, valores = mapOf("P1" to 58.0, "P2" to 66.0, "P3" to 61.0))
+                ),
+                estado = EstadoProtocolo.OBSERVADO,
+                motivoObservacion = "Falta el número de serie del instrumento en la prueba de contactos",
+                historial = historial(
+                    EstadoProtocolo.BORRADOR to f0389, EstadoProtocolo.REGISTRADO to f0389 + 2 * 3_600_000,
+                    EstadoProtocolo.OBSERVADO to f0389 + dia, rut = MORALES,
+                    motivo = "Falta el número de serie del instrumento en la prueba de contactos"
+                )
+            ),
+            Protocolo(
+                numero = "PT-2026-0377", visitaNumero = null, equipoId = "EQ-06", fechaHora = f0377, tecnicoRut = VALENZUELA,
+                temperatura = 24.0, humedad = 35.0,
+                pruebas = listOf(
+                    Prueba(
+                        TipoPrueba.OPERACION_RELE, instrumentoSerie = CMC,
+                        valores = mapOf("ajuste" to 5.0, "corriente" to 5.02, "t_esperado" to 300.0, "t_medido" to 309.0)
+                    )
+                ),
+                estado = EstadoProtocolo.FORMALIZADO,
+                historial = historial(
+                    EstadoProtocolo.BORRADOR to f0377, EstadoProtocolo.REGISTRADO to f0377 + 3_600_000,
+                    EstadoProtocolo.FORMALIZADO to f0377 + dia, rut = CONTRERAS
+                )
+            ),
+            Protocolo(
+                numero = "PT-2026-0360", visitaNumero = null, equipoId = "EQ-05", fechaHora = f0360, tecnicoRut = TAPIA,
+                temperatura = 27.0, humedad = 20.0,
+                pruebas = listOf(
+                    Prueba(TipoPrueba.AISLACION, instrumentoSerie = MEGGER_5KV, tensionKv = 5.0, valores = mapOf("L_1" to 18000.0)),
+                    Prueba(TipoPrueba.CONTACTOS, instrumentoSerie = DLRO, valores = mapOf("P1" to 44.0, "P2" to 58.0, "P3" to 47.0))
+                ),
+                estado = EstadoProtocolo.FORMALIZADO,
+                comentarioIngeniero = "Polo 2 sobre 120 % del máximo de placa. Se recomienda revisión de contactos.",
+                historial = historial(
+                    EstadoProtocolo.BORRADOR to f0360, EstadoProtocolo.REGISTRADO to f0360 + 3_600_000,
+                    EstadoProtocolo.FORMALIZADO to f0360 + dia, rut = MORALES
+                )
+            )
+        )
+    }
 }
