@@ -115,4 +115,107 @@ class InduztekViewModel(application: Application) : AndroidViewModel(application
             mostrarMensaje("Se restauraron los datos de ejemplo")
         }
     }
+
+    fun crearVisita(
+        clienteRut: String,
+        instalacionId: String,
+        fecha: LocalDate,
+        tipo: TipoVisita,
+        ingenieroRut: String,
+        onExito: (Visita) -> Unit
+    ) = ejecutar("Visita creada", onExito) { s, u ->
+        Operaciones.crearVisita(s, clienteRut, instalacionId, fecha, tipo, ingenieroRut, u)
+    }
+
+    fun agregarProtocolo(visitaNumero: String, equipoId: String, onExito: (Protocolo) -> Unit) =
+        ejecutar("Protocolo creado en Borrador", onExito) { s, u ->
+            Operaciones.agregarProtocolo(s, visitaNumero, equipoId, u, System.currentTimeMillis())
+        }
+
+    fun guardarDatosGenerales(
+        numero: String,
+        temperatura: Double?,
+        humedad: Double?,
+        observaciones: String,
+        mantenimiento: String,
+        onExito: () -> Unit = {}
+    ) = ejecutarSimple("Datos del protocolo guardados", onExito) { s, u ->
+        Operaciones.guardarDatosGenerales(s, numero, temperatura, humedad, observaciones, mantenimiento, u)
+    }
+
+    fun guardarPrueba(numero: String, prueba: Prueba, onExito: () -> Unit) =
+        ejecutarSimple("Prueba guardada", onExito) { s, u -> Operaciones.guardarPrueba(s, numero, prueba, u) }
+
+    fun definirResultadoManual(numero: String, tipo: TipoPrueba, resultado: Resultado) =
+        ejecutarSimple("Resultado definido: ${resultado.etiqueta}") { s, u ->
+            Operaciones.definirResultadoManual(s, numero, tipo, resultado, u)
+        }
+
+    fun guardarComentarioIngeniero(numero: String, comentario: String, onExito: () -> Unit = {}) =
+        ejecutarSimple("Comentario guardado", onExito) { s, u ->
+            Operaciones.guardarComentarioIngeniero(s, numero, comentario, u)
+        }
+
+    fun cambiarEstado(numero: String, hacia: EstadoProtocolo, motivo: String = "", onExito: () -> Unit = {}) =
+        ejecutarSimple("Protocolo ${hacia.etiqueta.lowercase()}", {
+            avisarSiCorresponde(numero, hacia)
+            onExito()
+        }) { s, u -> Operaciones.cambiarEstado(s, numero, hacia, motivo, u, System.currentTimeMillis()) }
+
+    private fun avisarSiCorresponde(numero: String, hacia: EstadoProtocolo) {
+        if (hacia != EstadoProtocolo.REGISTRADO) return
+        val s = sistema.value ?: return
+        val p = s.protocolo(numero) ?: return
+        val equipo = s.equipo(p.equipoId) ?: return
+        val rechazado = Calculos.global(p, equipo) == Resultado.RECHAZADO
+        val variacion = Calculos.comparar(p, s.protocoloAnterior(p), equipo).any { it.significativa }
+        if (rechazado || variacion) {
+            Vibracion.avisar(getApplication())
+            mostrarMensaje(
+                if (rechazado) "Atención: el protocolo quedó Rechazado" else "Atención: hay una variación significativa (RN-09)",
+                true
+            )
+        }
+    }
+
+    fun emitirReemplazo(numero: String, onExito: (Protocolo) -> Unit) =
+        ejecutar("Se emitió el protocolo de reemplazo", onExito) { s, u ->
+            Operaciones.emitirReemplazo(s, numero, u, System.currentTimeMillis())
+        }
+
+    fun cerrarVisita(numero: String, recepcion: Recepcion, onExito: () -> Unit) =
+        ejecutarSimple("Visita cerrada y acta generada", onExito) { s, u -> Operaciones.cerrarVisita(s, numero, recepcion, u) }
+
+    fun guardarEquipo(
+        equipo: Equipo,
+        ignorarDuplicado: Boolean,
+        onDuplicado: (Equipo) -> Unit,
+        onExito: () -> Unit
+    ) = ejecutar<Unit>(
+        exito = "Equipo ${equipo.tag} guardado",
+        onExito = { onExito() },
+        onError = { e ->
+            if (e is TagDuplicadoException) {
+                onDuplicado(e.existente)
+                true
+            } else false
+        }
+    ) { s, u -> Operaciones.guardarEquipo(s, equipo, u, ignorarDuplicado) to Unit }
+
+    fun guardarCliente(cliente: Cliente, esNuevo: Boolean, onExito: () -> Unit) =
+        ejecutarSimple("Cliente guardado", onExito) { s, u -> Operaciones.guardarCliente(s, cliente, u, esNuevo) }
+
+    fun guardarInstalacion(instalacion: Instalacion, onExito: () -> Unit) =
+        ejecutarSimple("Instalación guardada", onExito) { s, u -> Operaciones.guardarInstalacion(s, instalacion, u) }
+
+    fun guardarInstrumento(instrumento: Instrumento, esNuevo: Boolean, onExito: () -> Unit) =
+        ejecutarSimple("Instrumento guardado", onExito) { s, u -> Operaciones.guardarInstrumento(s, instrumento, u, esNuevo) }
+
+    fun guardarPersonal(nuevo: Usuario, onExito: () -> Unit) =
+        ejecutarSimple("${nuevo.nombre} fue agregado", onExito) { s, u -> Operaciones.guardarPersonal(s, nuevo, u) }
+
+    fun cambiarActivo(rut: String, activo: Boolean) =
+        ejecutarSimple(if (activo) "Usuario activado" else "Usuario desactivado") { s, u ->
+            Operaciones.cambiarActivo(s, rut, activo, u)
+        }
 }
