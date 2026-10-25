@@ -149,4 +149,57 @@ class EquipoFormViewModel(
         val original = fotoOriginal
         if (original != null && original != _estado.value.fotoRuta) ImagenUtils.borrar(original)
     }
+
+    fun prepararFoto(): Uri {
+        val (archivo, uri) = ImagenUtils.crearArchivoFoto(getApplication())
+        guardado[CLAVE_PENDIENTE] = archivo.absolutePath
+        return uri
+    }
+
+    fun onFotoTomada(exito: Boolean) {
+        val ruta = guardado.get<String>(CLAVE_PENDIENTE)
+        guardado.remove<String>(CLAVE_PENDIENTE)
+        val archivo = ruta?.let { File(it) } ?: return
+        if (exito && archivo.length() > 0) reemplazarFoto(archivo.absolutePath) else archivo.delete()
+    }
+
+    fun onCamaraNoDisponible(mensaje: String) {
+        ImagenUtils.borrar(guardado.get<String>(CLAVE_PENDIENTE))
+        guardado.remove<String>(CLAVE_PENDIENTE)
+        mostrarErrorFoto(mensaje)
+    }
+
+    fun onImagenGaleria(uri: Uri?) {
+        if (uri == null) return
+        viewModelScope.launch {
+            val copia = withContext(Dispatchers.IO) { ImagenUtils.copiarDesdeGaleria(getApplication(), uri) }
+            if (copia == null) mostrarErrorFoto("No se pudo leer la imagen seleccionada")
+            else reemplazarFoto(copia.absolutePath)
+        }
+    }
+
+    fun mostrarErrorFoto(mensaje: String) = _estado.update { it.copy(errores = it.errores.copy(foto = mensaje)) }
+
+    private fun reemplazarFoto(nueva: String) {
+        val anterior = _estado.value.fotoRuta
+        _estado.update { it.copy(fotoRuta = nueva, errores = it.errores.copy(foto = null)) }
+        if (anterior != nueva && anterior != fotoOriginal) ImagenUtils.borrar(anterior)
+    }
+
+    fun quitarFoto() {
+        val anterior = _estado.value.fotoRuta
+        _estado.update { it.copy(fotoRuta = null) }
+        if (anterior != fotoOriginal) ImagenUtils.borrar(anterior)
+    }
+
+    override fun onCleared() {
+        val actual = _estado.value.fotoRuta
+        if (!confirmado && actual != fotoOriginal) ImagenUtils.borrar(actual)
+        ImagenUtils.borrar(guardado.get<String>(CLAVE_PENDIENTE))
+        super.onCleared()
+    }
+
+    private companion object {
+        const val CLAVE_PENDIENTE = "equipo_foto_pendiente"
+    }
 }
