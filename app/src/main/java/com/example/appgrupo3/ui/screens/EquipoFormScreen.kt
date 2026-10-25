@@ -218,6 +218,48 @@ fun EquipoFormScreen(
                     )
                 }
 
+                Text("Foto de la placa", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    "Evita errores al copiar los datos de placa en terreno.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                    FotoEvidencia(estado.fotoRuta, stringResource(R.string.cd_foto_placa, estado.tag))
+                }
+                MensajeError(estado.errores.foto)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    FilledTonalButton(
+                        onClick = {
+                            if (Permisos.tiene(contexto, Permisos.CAMARA)) abrirCamara() else pedirPermiso.launch(Permisos.CAMARA)
+                        },
+                        modifier = Modifier.weight(1f).height(Dimens.alturaBotonChico)
+                    ) {
+                        Icon(Icons.Filled.PhotoCamera, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+                        Spacer(Modifier.width(ButtonDefaults.IconSpacing))
+                        Text(stringResource(R.string.btn_camara))
+                    }
+                    FilledTonalButton(
+                        onClick = {
+                            try {
+                                lanzadorGaleria.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                            } catch (e: ActivityNotFoundException) {
+                                viewModel.mostrarErrorFoto(textoSinGaleria)
+                            }
+                        },
+                        modifier = Modifier.weight(1f).height(Dimens.alturaBotonChico)
+                    ) {
+                        Icon(Icons.Filled.PhotoLibrary, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+                        Spacer(Modifier.width(ButtonDefaults.IconSpacing))
+                        Text(stringResource(R.string.btn_galeria))
+                    }
+                }
+                AnimatedVisibility(visible = estado.fotoRuta != null) {
+                    TextButton(onClick = viewModel::quitarFoto, modifier = Modifier.fillMaxWidth()) {
+                        Icon(Icons.Filled.Delete, contentDescription = null)
+                        Text("  " + stringResource(R.string.btn_quitar_foto))
+                    }
+                }
                 Button(
                     onClick = { guardar() },
                     modifier = Modifier.fillMaxWidth().height(Dimens.alturaBoton)
