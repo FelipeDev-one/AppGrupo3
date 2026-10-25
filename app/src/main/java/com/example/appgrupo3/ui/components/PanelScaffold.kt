@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Assignment
+import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.ElectricalServices
 import androidx.compose.material.icons.filled.ManageAccounts
@@ -40,14 +40,14 @@ private data class Pestana(
 )
 
 private val pestanasInternas = listOf(
-    Pestana(Ruta.Visitas, R.string.nav_visitas, Icons.Filled.Assignment),
+    Pestana(Ruta.Visitas, R.string.nav_visitas, Icons.AutoMirrored.Filled.Assignment),
     Pestana(Ruta.Protocolos, R.string.nav_protocolos, Icons.Filled.Description),
     Pestana(Ruta.Equipos, R.string.nav_equipos, Icons.Filled.ElectricalServices),
     Pestana(Ruta.Gestion, R.string.nav_gestion, Icons.Filled.Settings)
 )
 
 private val pestanasCliente = listOf(
-    Pestana(Ruta.Visitas, R.string.nav_actas, Icons.Filled.Assignment),
+    Pestana(Ruta.Visitas, R.string.nav_actas, Icons.AutoMirrored.Filled.Assignment),
     Pestana(Ruta.Protocolos, R.string.nav_protocolos, Icons.Filled.Description),
     Pestana(Ruta.Equipos, R.string.nav_equipos, Icons.Filled.ElectricalServices),
     Pestana(Ruta.Gestion, R.string.nav_cuenta, Icons.Filled.ManageAccounts)

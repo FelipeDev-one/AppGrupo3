@@ -26,15 +26,15 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Comment
-import androidx.compose.material.icons.filled.CompareArrows
+import androidx.compose.material.icons.automirrored.filled.Comment
+import androidx.compose.material.icons.automirrored.filled.CompareArrows
 import androidx.compose.material.icons.filled.Construction
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Notes
+import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.filled.Report
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Science
-import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Thermostat
 import androidx.compose.material.icons.filled.Timeline
@@ -174,7 +174,7 @@ fun ProtocoloScreen(
                             valor = datos.observaciones,
                             onCambio = viewModel::onObservaciones,
                             etiqueta = "Observaciones del equipo",
-                            icono = Icons.Filled.Notes,
+                            icono = Icons.AutoMirrored.Filled.Notes,
                             error = null,
                             ayuda = "${datos.observaciones.length}/300",
                             unaLinea = false,
@@ -427,7 +427,7 @@ private fun ResultadoManual(actual: Resultado?, onElegir: (Resultado) -> Unit) {
 
 @Composable
 private fun Comparacion(comparacion: List<ComparacionPrueba>, anterior: Protocolo?) {
-    SeccionTarjeta("Comparación con la prueba anterior", Icons.Filled.CompareArrows) {
+    SeccionTarjeta("Comparación con la prueba anterior", Icons.AutoMirrored.Filled.CompareArrows) {
         if (anterior == null || comparacion.isEmpty()) {
             Text("Sin historial previo para comparar.", color = MaterialTheme.colorScheme.onSurfaceVariant)
             return@SeccionTarjeta
@@ -469,14 +469,14 @@ private fun ComentarioIngeniero(
 ) {
     val puede = Reglas.puedeDefinirResultadoManual(p, u)
     if (!puede && p.comentarioIngeniero.isBlank()) return
-    SeccionTarjeta("Comentario del ingeniero", Icons.Filled.Comment) {
+    SeccionTarjeta("Comentario del ingeniero", Icons.AutoMirrored.Filled.Comment) {
         if (puede) {
             if (requerido) Text("Obligatorio antes de formalizar por variación significativa (RN-09).", color = MaterialTheme.colorScheme.error)
             CampoTexto(
                 valor = comentario,
                 onCambio = onCambio,
                 etiqueta = "Interpretación de resultados",
-                icono = Icons.Filled.Comment,
+                icono = Icons.AutoMirrored.Filled.Comment,
                 error = error,
                 ayuda = "${comentario.length}/300",
                 unaLinea = false,
@@ -524,7 +524,7 @@ private fun Acciones(
                 enabled = faltantesRegistro.isEmpty() && !datosSinGuardar,
                 modifier = Modifier.fillMaxWidth().height(Dimens.alturaBoton)
             ) {
-                Icon(Icons.Filled.Send, contentDescription = null)
+                Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null)
                 Text(if (p.estado == EstadoProtocolo.OBSERVADO) "  Registrar corrección" else "  Registrar en terreno")
             }
         }

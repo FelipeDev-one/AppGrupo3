@@ -25,7 +25,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Bolt
-import androidx.compose.material.icons.filled.Login
+import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -123,7 +123,7 @@ fun LoginScreen(
                     .fillMaxWidth()
                     .height(Dimens.alturaBoton)
             ) {
-                Icon(Icons.Filled.Login, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+                Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
                 Text("  " + stringResource(R.string.btn_ingresar))
             }
 

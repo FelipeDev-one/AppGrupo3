@@ -12,7 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Assignment
+import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Construction
 import androidx.compose.material.icons.filled.PendingActions
@@ -113,7 +113,7 @@ fun VisitasScreen(navController: NavController, app: InduztekViewModel) {
             if (visitas.isEmpty()) {
                 item {
                     EstadoVacio(
-                        Icons.Filled.Assignment,
+                        Icons.AutoMirrored.Filled.Assignment,
                         if (esCliente) "Aún no hay actas de tu empresa" else "No hay visitas en esta vista"
                     )
                 }

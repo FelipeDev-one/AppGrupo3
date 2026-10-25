@@ -18,7 +18,7 @@ import androidx.compose.material.icons.filled.ElectricalServices
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LockClock
 import androidx.compose.material.icons.filled.PostAdd
-import androidx.compose.material.icons.filled.ReceiptLong
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.TaskAlt
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
@@ -154,7 +154,7 @@ fun VisitaDetalleScreen(
                         }
                     }
                     Button(onClick = onActa, modifier = Modifier.fillMaxWidth().height(Dimens.alturaBoton)) {
-                        Icon(Icons.Filled.ReceiptLong, contentDescription = null)
+                        Icon(Icons.AutoMirrored.Filled.ReceiptLong, contentDescription = null)
                         Text("  Ver acta de terreno")
                     }
                 } else if (Reglas.puedeCerrarVisita(u)) {

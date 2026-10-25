@@ -17,7 +17,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.EventAvailable
 import androidx.compose.material.icons.filled.EventBusy
-import androidx.compose.material.icons.filled.Label
+import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Speed
@@ -165,8 +165,8 @@ fun InstrumentoFormScreen(
             onSeleccion = viewModel::onTipo,
             error = estado.errorTipo
         )
-        CampoTexto(estado.nombre, viewModel::onNombre, "Nombre", Icons.Filled.Label, estado.errorNombre, placeholder = "Megóhmetro 5 kV")
-        CampoTexto(estado.modelo, viewModel::onModelo, "Marca y modelo", Icons.Filled.Label, estado.errorModelo, placeholder = "Megger MIT525")
+        CampoTexto(estado.nombre, viewModel::onNombre, "Nombre", Icons.AutoMirrored.Filled.Label, estado.errorNombre, placeholder = "Megóhmetro 5 kV")
+        CampoTexto(estado.modelo, viewModel::onModelo, "Marca y modelo", Icons.AutoMirrored.Filled.Label, estado.errorModelo, placeholder = "Megger MIT525")
         CampoTexto(
             valor = estado.calibracion,
             onCambio = viewModel::onCalibracion,
