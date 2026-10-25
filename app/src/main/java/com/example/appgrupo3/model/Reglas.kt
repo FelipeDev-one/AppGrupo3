@@ -83,4 +83,52 @@ object Reglas {
         }
         return lista
     }
+
+    fun estadoCalibracion(instrumento: Instrumento, fecha: LocalDate): EstadoCalibracion {
+        val vence = LocalDate.parse(instrumento.vencimiento)
+        return when {
+            vence.isBefore(fecha) -> EstadoCalibracion.VENCIDO
+            ChronoUnit.DAYS.between(fecha, vence) <= DIAS_AVISO_CALIBRACION -> EstadoCalibracion.POR_VENCER
+            else -> EstadoCalibracion.VIGENTE
+        }
+    }
+
+    fun instrumentoUsable(instrumento: Instrumento, prueba: TipoPrueba, fecha: LocalDate): Boolean =
+        prueba in instrumento.tipo.pruebas && estadoCalibracion(instrumento, fecha) != EstadoCalibracion.VENCIDO
+
+    fun pendientesCierre(protocolos: List<Protocolo>): List<Protocolo> = protocolos.filter {
+        it.estado != EstadoProtocolo.REGISTRADO &&
+            it.estado != EstadoProtocolo.ANULADO &&
+            it.estado != EstadoProtocolo.FORMALIZADO
+    }
+
+    fun diasHabilesDesdePrueba(p: Protocolo, hoy: LocalDate): Int =
+        Tiempo.diasHabilesEntre(Tiempo.aFecha(p.fechaHora), hoy)
+
+    fun estaAtrasado(p: Protocolo, hoy: LocalDate): Boolean =
+        p.estado != EstadoProtocolo.FORMALIZADO &&
+            p.estado != EstadoProtocolo.ANULADO &&
+            diasHabilesDesdePrueba(p, hoy) > DIAS_HABILES_FORMALIZACION
+
+    fun visibleParaCliente(p: Protocolo): Boolean =
+        p.estado != EstadoProtocolo.BORRADOR && p.estado != EstadoProtocolo.ANULADO
+
+    fun estadoParaCliente(p: Protocolo): String = when (p.estado) {
+        EstadoProtocolo.REGISTRADO, EstadoProtocolo.OBSERVADO -> PENDIENTE
+        else -> p.estado.etiqueta
+    }
+
+    fun tagDuplicado(equipos: List<Equipo>, instalacionId: String, tag: String, excluirId: String?): Equipo? =
+        equipos.firstOrNull {
+            it.instalacionId == instalacionId && it.id != excluirId && it.tag.trim().equals(tag.trim(), ignoreCase = true)
+        }
+
+    fun siguienteNumero(prefijo: String, existentes: List<String>, anio: Int, dispositivo: String): String {
+        val base = "$prefijo-$anio-"
+        val mayor = existentes
+            .filter { it.startsWith(base) }
+            .mapNotNull { it.removePrefix(base).substringBefore("-").toIntOrNull() }
+            .maxOrNull() ?: 0
+        return base + "%04d".format(mayor + 1) + "-" + dispositivo
+    }
 }
