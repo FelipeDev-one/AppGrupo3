@@ -235,6 +235,34 @@ fun PruebaScreen(
                     }
                 }
 
+                if (conMantenimiento && estado.realizada) {
+                    SeccionTarjeta("Mantenimiento", Icons.Filled.Build) {
+                        val previos = estado.valoresPrevios
+                        if (previos != null) {
+                            Text("Medición previa guardada · ${estado.resultadoPrevio?.etiqueta ?: "sin resultado"}")
+                            Text(
+                                previos.entries.joinToString(" · ") { (k, v) -> "$k ${Formato.numero(v)}" },
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text("Los valores de arriba son la medición posterior; esa es la que vale.", style = MaterialTheme.typography.bodyMedium)
+                        } else {
+                            Text("Si repites la prueba después del mantenimiento, guarda esta medición como previa.", style = MaterialTheme.typography.bodyMedium)
+                            OutlinedButton(
+                                onClick = {
+                                    if (viewModel.validar(equipo) && !viewModel.moverAPrevia(equipo)) {
+                                        app.mostrarMensaje("Ingresa al menos una lectura antes", true)
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(Icons.Filled.Replay, contentDescription = null)
+                                Text("  Guardar como previa y repetir")
+                            }
+                        }
+                    }
+                }
+
                 Button(
                     onClick = {
                         if (viewModel.validar(equipo)) app.guardarPrueba(numero, viewModel.construir(equipo), onVolver)
