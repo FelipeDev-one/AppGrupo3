@@ -123,4 +123,39 @@ object Calculos {
         }
         return peor(resultados)
     }
+
+    fun detalle(prueba: Prueba, equipo: Equipo): List<String> {
+        if (!prueba.realizada) return emptyList()
+        val v = prueba.valores
+        return when (prueba.tipo) {
+            TipoPrueba.AISLACION -> Catalogo.paresAislacion(equipo.tipo).mapNotNull { par ->
+                val uno = v[par.claveUnMinuto] ?: return@mapNotNull null
+                val diez = par.claveDiezMinutos?.let { v[it] }
+                if (diez == null) "${par.nombre}: ${Formato.numero(uno)} MΩ a 1 min"
+                else "${par.nombre}: IP ${Formato.numero(indicePolarizacion(uno, diez), 2)}"
+            }
+            TipoPrueba.TTR -> {
+                val t = v["teorica"]
+                val m = v["medida"]
+                if (t != null && m != null && t > 0) listOf("Error ${Formato.numero(errorTtr(t, m), 2)} %") else emptyList()
+            }
+            TipoPrueba.CONTACTOS -> {
+                val maximo = equipo.contactoMaximo
+                val polos = (1..3).mapNotNull { v["P$it"] }
+                if (maximo != null && polos.size == 3) {
+                    listOf("Mayor polo ${Formato.numero(porcentajeContactos(polos.max(), maximo), 1)} % del máximo de placa (${Formato.numero(maximo)} µΩ)")
+                } else emptyList()
+            }
+            TipoPrueba.OPERACION_RELE -> {
+                val e = v["t_esperado"]
+                val m = v["t_medido"]
+                when {
+                    prueba.noOpera -> listOf("El relé no operó")
+                    e != null && m != null && e > 0 -> listOf("Diferencia de tiempo ${Formato.numero(diferenciaRele(e, m), 1)} %")
+                    else -> emptyList()
+                }
+            }
+            TipoPrueba.DEVANADOS -> if (prueba.resultadoManual == null) listOf("Resultado pendiente del ingeniero (RN-08c)") else emptyList()
+        }
+    }
 }
