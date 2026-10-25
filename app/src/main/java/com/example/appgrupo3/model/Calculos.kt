@@ -133,8 +133,11 @@ object Calculos {
             TipoPrueba.AISLACION -> Catalogo.paresAislacion(equipo.tipo).mapNotNull { par ->
                 val uno = v[par.claveUnMinuto] ?: return@mapNotNull null
                 val diez = par.claveDiezMinutos?.let { v[it] }
-                if (diez == null) "${par.nombre}: ${Formato.numero(uno)} MΩ a 1 min"
-                else "${par.nombre}: IP ${Formato.numero(indicePolarizacion(uno, diez), 2)}"
+                when {
+                    diez != null -> "${par.nombre}: IP ${Formato.numero(indicePolarizacion(uno, diez), 2)}"
+                    uno < LECTURA_MINIMA_MOHM -> "Lectura bajo el mínimo de 100 MΩ"
+                    else -> "Lectura sobre el mínimo de 100 MΩ"
+                }
             }
             TipoPrueba.TTR -> errorTtrMaximo(v)?.let { listOf("Error máximo ${Formato.numero(it, 2)} %") } ?: emptyList()
             TipoPrueba.CONTACTOS -> {
