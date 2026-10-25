@@ -45,4 +45,42 @@ object Reglas {
 
     fun puedeReemplazar(p: Protocolo, u: Usuario): Boolean =
         esRevisor(u) && p.estado == EstadoProtocolo.FORMALIZADO && p.reemplazadoPor == null
+
+    fun transicionPermitida(desde: EstadoProtocolo, hacia: EstadoProtocolo): Boolean = when (hacia) {
+        EstadoProtocolo.REGISTRADO -> desde == EstadoProtocolo.BORRADOR || desde == EstadoProtocolo.OBSERVADO
+        EstadoProtocolo.FORMALIZADO, EstadoProtocolo.OBSERVADO -> desde == EstadoProtocolo.REGISTRADO
+        EstadoProtocolo.ANULADO -> desde != EstadoProtocolo.FORMALIZADO && desde != EstadoProtocolo.ANULADO
+        EstadoProtocolo.BORRADOR -> false
+    }
+
+    fun puedeCambiar(p: Protocolo, hacia: EstadoProtocolo, u: Usuario): Boolean = when (hacia) {
+        EstadoProtocolo.REGISTRADO -> puedeRegistrarEnTerreno(p, u)
+        EstadoProtocolo.FORMALIZADO -> puedeFormalizar(p, u)
+        EstadoProtocolo.OBSERVADO -> puedeObservar(p, u)
+        EstadoProtocolo.ANULADO -> puedeAnular(p, u)
+        EstadoProtocolo.BORRADOR -> false
+    }
+
+    fun requiereMotivo(hacia: EstadoProtocolo): Boolean =
+        hacia == EstadoProtocolo.OBSERVADO || hacia == EstadoProtocolo.ANULADO
+
+    fun faltantesRegistro(p: Protocolo, equipo: Equipo): List<String> {
+        val lista = mutableListOf<String>()
+        if (p.temperatura == null) lista += "Temperatura ambiente"
+        if (p.humedad == null) lista += "Humedad relativa"
+        val realizadasCompletas = p.pruebas.count { it.realizada && Calculos.estaCompleta(it, equipo) }
+        if (realizadasCompletas == 0) lista += "Al menos una prueba completa"
+        p.pruebas.filter { !Calculos.estaCompleta(it, equipo) }.forEach { lista += it.tipo.etiqueta }
+        return lista
+    }
+
+    fun faltantesFormalizacion(p: Protocolo, equipo: Equipo, comparacion: List<ComparacionPrueba>): List<String> {
+        val lista = mutableListOf<String>()
+        p.pruebas.filter { it.realizada && Calculos.resultado(it, equipo) == null }
+            .forEach { lista += "Resultado de ${it.tipo.etiqueta}" }
+        if (comparacion.any { it.significativa } && p.comentarioIngeniero.isBlank()) {
+            lista += "Comentario del ingeniero por variación significativa (RN-09)"
+        }
+        return lista
+    }
 }
