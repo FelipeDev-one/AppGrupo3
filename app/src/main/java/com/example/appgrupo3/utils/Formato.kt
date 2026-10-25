@@ -18,7 +18,11 @@ object Formato {
         return texto.replace('.', ',')
     }
 
-    fun aNumero(texto: String): Double? = texto.trim().replace(".", "").replace(',', '.').toDoubleOrNull()
+    fun aNumero(texto: String): Double? {
+        val limpio = texto.trim()
+        val normal = if (limpio.contains(',')) limpio.replace(".", "").replace(',', '.') else limpio
+        return normal.toDoubleOrNull()
+    }
 
     fun porcentaje(valor: Double): String = (if (valor > 0) "+" else "") + numero(valor, 1) + " %"
 }
