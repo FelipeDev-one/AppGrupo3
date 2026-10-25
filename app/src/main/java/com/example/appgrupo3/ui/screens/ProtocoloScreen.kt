@@ -492,3 +492,88 @@ private fun ComentarioIngeniero(
         }
     }
 }
+
+@Composable
+private fun Acciones(
+    p: Protocolo,
+    u: Usuario,
+    faltantesRegistro: List<String>,
+    faltantesFormalizacion: List<String>,
+    datosSinGuardar: Boolean,
+    onRegistrar: () -> Unit,
+    onDialogo: (Dialogo) -> Unit
+) {
+    val puedeRegistrar = Reglas.puedeRegistrarEnTerreno(p, u)
+    val puedeFormalizar = Reglas.puedeFormalizar(p, u)
+    if (!puedeRegistrar && !puedeFormalizar && !Reglas.puedeAnular(p, u) && !Reglas.puedeReemplazar(p, u)) {
+        if (p.estado == EstadoProtocolo.BORRADOR || p.estado == EstadoProtocolo.OBSERVADO) {
+            Text(
+                "Solo el técnico que creó el protocolo, o un ingeniero, puede modificarlo (RN-17).",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        return
+    }
+    SeccionTarjeta("Acciones", Icons.Filled.Timeline) {
+        if (puedeRegistrar) {
+            if (faltantesRegistro.isNotEmpty()) {
+                Text("Para registrar en terreno falta: " + faltantesRegistro.joinToString(", "), color = MaterialTheme.colorScheme.error)
+            }
+            if (datosSinGuardar) Text("Guarda las condiciones antes de registrar.", color = MaterialTheme.colorScheme.error)
+            Button(
+                onClick = onRegistrar,
+                enabled = faltantesRegistro.isEmpty() && !datosSinGuardar,
+                modifier = Modifier.fillMaxWidth().height(Dimens.alturaBoton)
+            ) {
+                Icon(Icons.Filled.Send, contentDescription = null)
+                Text(if (p.estado == EstadoProtocolo.OBSERVADO) "  Registrar corrección" else "  Registrar en terreno")
+            }
+        }
+        if (puedeFormalizar) {
+            if (faltantesFormalizacion.isNotEmpty()) {
+                Text("Para formalizar falta: " + faltantesFormalizacion.joinToString(", "), color = MaterialTheme.colorScheme.error)
+            }
+            Button(
+                onClick = { onDialogo(Dialogo.FORMALIZAR) },
+                enabled = faltantesFormalizacion.isEmpty(),
+                modifier = Modifier.fillMaxWidth().height(Dimens.alturaBoton)
+            ) {
+                Icon(Icons.Filled.Verified, contentDescription = null)
+                Text("  Formalizar")
+            }
+            OutlinedButton(onClick = { onDialogo(Dialogo.OBSERVAR) }, modifier = Modifier.fillMaxWidth()) {
+                Icon(Icons.Filled.Report, contentDescription = null)
+                Text("  Observar y devolver")
+            }
+        }
+        if (Reglas.puedeAnular(p, u)) {
+            OutlinedButton(onClick = { onDialogo(Dialogo.ANULAR) }, modifier = Modifier.fillMaxWidth()) {
+                Icon(Icons.Filled.Block, contentDescription = null)
+                Text("  Anular")
+            }
+        }
+        if (Reglas.puedeReemplazar(p, u)) {
+            OutlinedButton(onClick = { onDialogo(Dialogo.REEMPLAZAR) }, modifier = Modifier.fillMaxWidth()) {
+                Icon(Icons.Filled.SwapHoriz, contentDescription = null)
+                Text("  Emitir reemplazo")
+            }
+        }
+    }
+}
+
+@Composable
+private fun HistorialEstados(p: Protocolo, s: Sistema) {
+    SeccionTarjeta("Historial de estados", Icons.Filled.History) {
+        p.historial.reversed().forEach { c ->
+            Column {
+                Text("${c.hacia.etiqueta} · ${Tiempo.fechaHora(c.fechaHora)}", fontWeight = FontWeight.SemiBold)
+                Text(
+                    s.nombre(c.rut) + if (c.motivo.isNotBlank()) " · ${c.motivo}" else "",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
