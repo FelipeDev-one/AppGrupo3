@@ -45,7 +45,6 @@ import com.example.appgrupo3.ui.components.SeccionTarjeta
 import com.example.appgrupo3.ui.theme.Dimens
 import com.example.appgrupo3.viewmodel.InduztekViewModel
 
-// true = muestra el botón "Restaurar datos de ejemplo" a la jefatura (solo para demostraciones).
 private const val MOSTRAR_RESTAURAR_DATOS = false
 
 @Composable

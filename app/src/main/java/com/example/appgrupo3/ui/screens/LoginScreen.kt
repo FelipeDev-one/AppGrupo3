@@ -52,7 +52,6 @@ import com.example.appgrupo3.ui.theme.Dimens
 import com.example.appgrupo3.viewmodel.InduztekViewModel
 import com.example.appgrupo3.viewmodel.LoginViewModel
 
-// true = muestra botones para elegir un usuario de prueba (solo para demostraciones).
 private const val MOSTRAR_USUARIOS_PRUEBA = false
 
 @OptIn(ExperimentalLayoutApi::class)
