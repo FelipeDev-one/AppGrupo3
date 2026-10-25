@@ -23,6 +23,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -58,7 +59,7 @@ fun ProtocolosScreen(
     val u = usuario ?: return
     val esCliente = u.perfil == Perfil.CLIENTE
     val hoy = app.hoy()
-    val lista = viewModel.protocolos(s, u, hoy)
+    val lista = remember(s, u, filtros) { viewModel.protocolos(s, u, hoy) }
 
     val estados = if (esCliente) listOf(EstadoProtocolo.FORMALIZADO, EstadoProtocolo.REGISTRADO) else EstadoProtocolo.entries
 
