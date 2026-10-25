@@ -15,7 +15,7 @@ object Validaciones {
     }
 
     fun errorNombre(nombre: String, campo: String): String? = when {
-        nombre.isBlank() -> "$campo es obligatorio"
+        nombre.isBlank() -> "Ingresa ${campo.lowercase()}"
         nombre.trim().length < 3 -> "$campo debe tener al menos 3 caracteres"
         else -> null
     }
