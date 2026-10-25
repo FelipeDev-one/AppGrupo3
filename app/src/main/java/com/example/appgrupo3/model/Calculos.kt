@@ -39,4 +39,22 @@ object Calculos {
         error <= 1.0 -> Resultado.OBSERVADO
         else -> Resultado.RECHAZADO
     }
+
+    fun porcentajeContactos(medido: Double, maximo: Double): Double = medido / maximo * 100
+
+    fun clasificarContactos(porcentaje: Double): Resultado = when {
+        porcentaje <= 100.0 -> Resultado.APROBADO
+        porcentaje <= 120.0 -> Resultado.OBSERVADO
+        else -> Resultado.RECHAZADO
+    }
+
+    fun diferenciaRele(esperado: Double, medido: Double): Double = abs(medido - esperado) / esperado * 100
+
+    fun clasificarRele(diferencia: Double): Resultado = when {
+        diferencia <= 5.0 -> Resultado.APROBADO
+        diferencia <= 10.0 -> Resultado.OBSERVADO
+        else -> Resultado.RECHAZADO
+    }
+
+    fun peor(resultados: List<Resultado>): Resultado? = resultados.maxByOrNull { it.gravedad }
 }
