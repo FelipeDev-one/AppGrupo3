@@ -349,3 +349,80 @@ fun ProtocoloScreen(
         null -> Unit
     }
 }
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun Encabezado(
+    p: Protocolo,
+    s: Sistema,
+    global: Resultado?,
+    esCliente: Boolean,
+    atrasado: Boolean,
+    onProtocolo: (String) -> Unit
+) {
+    val equipo = s.equipo(p.equipoId)
+    val instalacion = equipo?.let { s.instalacion(it.instalacionId) }
+    val c = colores(tonoDe(global))
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer), modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(Dimens.espacioMedio), verticalArrangement = Arrangement.spacedBy(Dimens.espacioMini)) {
+            Text(
+                "${equipo?.tipo?.etiqueta} · ${equipo?.tipo?.categoria?.etiqueta}",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Text("${s.cliente(instalacion?.clienteRut)?.razonSocial ?: ""} · ${instalacion?.nombre ?: ""}", style = MaterialTheme.typography.titleMedium)
+            Text("${equipo?.marca} ${equipo?.serie} · ${equipo?.anio} · ${equipo?.placa}", style = MaterialTheme.typography.bodyMedium)
+            Text("${Tiempo.fechaHora(p.fechaHora)} · Técnico ${s.nombre(p.tecnicoRut)}", style = MaterialTheme.typography.bodyMedium)
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = Dimens.espacioChico)) {
+                Column(Modifier.weight(1f)) {
+                    Text("Resultado global", style = MaterialTheme.typography.bodyMedium)
+                    AnimatedContent(
+                        targetState = global,
+                        transitionSpec = { (fadeIn() + scaleIn()) togetherWith fadeOut() },
+                        label = "global"
+                    ) { r ->
+                        Text(
+                            r?.etiqueta ?: "Pendiente",
+                            style = CifraResultado,
+                            color = c.texto,
+                            modifier = Modifier
+                                .background(c.fondo, RoundedCornerShape(12.dp))
+                                .padding(horizontal = Dimens.espacioChico)
+                        )
+                    }
+                }
+            }
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.espacioChico), verticalArrangement = Arrangement.spacedBy(Dimens.espacioMini)) {
+                EtiquetaEstado(p.estado, paraCliente = esCliente)
+                if (atrasado && !esCliente) Etiqueta("Atrasado: más de 2 días hábiles (RN-16)", Tono.RECHAZADO, Icons.Filled.Schedule)
+            }
+            if (p.estado == EstadoProtocolo.OBSERVADO && p.motivoObservacion.isNotBlank() && !esCliente) {
+                Text("Observación: ${p.motivoObservacion}", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.SemiBold)
+            }
+            if (p.estado == EstadoProtocolo.ANULADO) Text("Motivo de anulación: ${p.motivoAnulacion}", fontWeight = FontWeight.SemiBold)
+            p.reemplazadoPor?.let { nuevo ->
+                OutlinedButton(onClick = { onProtocolo(nuevo) }) {
+                    Icon(Icons.Filled.SwapHoriz, contentDescription = null)
+                    Text("  Reemplazado por nº $nuevo")
+                }
+            }
+            p.reemplazaA?.let { original ->
+                OutlinedButton(onClick = { onProtocolo(original) }) {
+                    Icon(Icons.Filled.SwapHoriz, contentDescription = null)
+                    Text("  Reemplaza al nº $original")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ResultadoManual(actual: Resultado?, onElegir: (Resultado) -> Unit) {
+    Column {
+        Text("Resultado definido por el ingeniero (RN-08c)", style = MaterialTheme.typography.bodyMedium)
+        Row(horizontalArrangement = Arrangement.spacedBy(Dimens.espacioChico)) {
+            Resultado.entries.forEach { r ->
+                FilterChip(selected = actual == r, onClick = { onElegir(r) }, label = { Text(r.etiqueta) })
+            }
+        }
+    }
+}
