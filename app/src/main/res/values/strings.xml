@@ -1,3 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">AppGrupo3</string>
+    <string name="app_name">Protocolos Induztek</string>
+    <string name="marca">Induztek Ingeniería</string>
+    <string name="subtitulo_marca">Protocolos de prueba eléctrica en terreno</string>
+    <string name="cargando">Cargando protocolos…</string>
+
+    <string name="nav_visitas">Visitas</string>
+    <string name="nav_actas">Actas</string>
+    <string name="nav_protocolos">Protocolos</string>
+    <string name="nav_equipos">Equipos</string>
+    <string name="nav_gestion">Gestión</string>
+    <string name="nav_cuenta">Cuenta</string>
+
+    <string name="titulo_login">Ingreso</string>
+    <string name="titulo_visitas">Visitas a terreno</string>
+    <string name="titulo_actas">Actas de terreno</string>
+    <string name="titulo_protocolos">Protocolos</string>
+    <string name="titulo_equipos">Equipos</string>
+    <string name="titulo_gestion">Gestión</string>
+    <string name="titulo_cuenta">Mi cuenta</string>
+    <string name="titulo_nueva_visita">Nueva visita</string>
+    <string name="titulo_equipo_nuevo">Nuevo equipo</string>
+    <string name="titulo_equipo_editar">Editar equipo</string>
+    <string name="titulo_recepcion">Cierre y recepción</string>
+    <string name="titulo_acta">Acta de prueba en terreno</string>
+    <string name="titulo_historial">Historial del equipo</string>
+    <string name="titulo_clientes">Clientes e instalaciones</string>
+    <string name="titulo_cliente_nuevo">Nuevo cliente</string>
+    <string name="titulo_cliente_editar">Editar cliente</string>
+    <string name="titulo_instalacion">Instalación</string>
+    <string name="titulo_instrumentos">Instrumentos</string>
+    <string name="titulo_instrumento">Instrumento</string>
+    <string name="titulo_personal">Personal Induztek</string>
+    <string name="titulo_personal_nuevo">Agregar personal</string>
+    <string name="titulo_indicadores">Indicadores</string>
+
+    <string name="btn_ingresar">Ingresar</string>
+    <string name="btn_guardar">Guardar</string>
+    <string name="btn_cancelar">Cancelar</string>
+    <string name="btn_confirmar">Confirmar</string>
+    <string name="btn_camara">Cámara</string>
+    <string name="btn_galeria">Galería</string>
+    <string name="btn_quitar_foto">Quitar foto</string>
+    <string name="btn_cerrar_sesion">Cerrar sesión</string>
+
+    <string name="sin_foto">Sin foto</string>
+    <string name="cd_volver">Volver</string>
+    <string name="cd_foto_placa">Foto de la placa del equipo %1$s</string>
+    <string name="sin_conexion">Sin conexión: todo se guarda en este dispositivo</string>
+    <string name="permiso_camara_denegado">Sin permiso de cámara no se puede fotografiar la placa</string>
+    <string name="ajustes">Ajustes</string>
+    <string name="sin_camara">Este dispositivo no tiene una app de cámara</string>
+    <string name="sin_galeria">No se encontró una galería disponible</string>
+    <string name="pendiente_formalizacion">Pendiente de formalización</string>
 </resources>
