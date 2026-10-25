@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -48,9 +49,13 @@ class InduztekViewModel(application: Application) : AndroidViewModel(application
     val cargando: StateFlow<Boolean> = sistema.map { it == null }
         .stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
+    private val _sesionLista = MutableStateFlow(false)
+    val sesionLista: StateFlow<Boolean> = _sesionLista.asStateFlow()
+
     val usuario: StateFlow<Usuario?> = combine(sistema, dataStore.obtenerSesion()) { s, rut ->
         s?.usuario(rut)?.takeIf { it.activo }
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+    }.onEach { _sesionLista.value = true }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     val conectado: StateFlow<Boolean> = Conectividad.observar(application)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
