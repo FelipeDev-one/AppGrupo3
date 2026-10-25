@@ -61,4 +61,57 @@ object Operaciones {
         )
         return s.copy(protocolos = s.protocolos + protocolo) to protocolo
     }
+
+    fun guardarDatosGenerales(
+        s: Sistema,
+        numero: String,
+        temperatura: Double?,
+        humedad: Double?,
+        observaciones: String,
+        mantenimiento: String,
+        usuario: Usuario
+    ): Sistema {
+        val p = protocoloOError(s, numero)
+        exigir(Reglas.puedeEditar(p, usuario), "No puedes modificar este protocolo (RN-17)")
+        if (temperatura != null) exigir(temperatura in -20.0..60.0, "La temperatura debe estar entre -20 y 60 °C")
+        if (humedad != null) exigir(humedad in 0.0..100.0, "La humedad debe estar entre 0 y 100 %")
+        return reemplazar(
+            s,
+            p.copy(temperatura = temperatura, humedad = humedad, observaciones = observaciones.trim(), mantenimiento = mantenimiento.trim())
+        )
+    }
+
+    fun guardarPrueba(s: Sistema, numero: String, prueba: Prueba, usuario: Usuario): Sistema {
+        val p = protocoloOError(s, numero)
+        exigir(Reglas.puedeEditar(p, usuario), "No puedes modificar este protocolo (RN-17)")
+        if (prueba.realizada) {
+            val serie = prueba.instrumentoSerie
+            if (serie != null) {
+                val instrumento = s.instrumento(serie) ?: throw ReglaNegocioException("El instrumento no existe")
+                val fecha = Tiempo.aFecha(p.fechaHora)
+                exigir(prueba.tipo in instrumento.tipo.pruebas, "${instrumento.nombre} no sirve para ${prueba.tipo.etiqueta}")
+                exigir(
+                    Reglas.estadoCalibracion(instrumento, fecha) != EstadoCalibracion.VENCIDO,
+                    "La calibración de ${instrumento.serie} venció el ${Tiempo.fechaLegible(instrumento.vencimiento)} (RN-11)"
+                )
+            }
+        } else {
+            exigir(prueba.motivoNoRealizada.isNotBlank(), "Indica por qué no se realizó la prueba")
+        }
+        val manual = if (Reglas.esRevisor(usuario)) prueba.resultadoManual else p.prueba(prueba.tipo)?.resultadoManual
+        val final = prueba.copy(resultadoManual = manual)
+        return reemplazar(s, p.copy(pruebas = p.pruebas.map { if (it.tipo == prueba.tipo) final else it }))
+    }
+
+    fun definirResultadoManual(s: Sistema, numero: String, tipo: TipoPrueba, resultado: Resultado, usuario: Usuario): Sistema {
+        val p = protocoloOError(s, numero)
+        exigir(Reglas.puedeDefinirResultadoManual(p, usuario), "Solo el ingeniero o jefe técnico define este resultado (RN-08c)")
+        return reemplazar(s, p.copy(pruebas = p.pruebas.map { if (it.tipo == tipo) it.copy(resultadoManual = resultado) else it }))
+    }
+
+    fun guardarComentarioIngeniero(s: Sistema, numero: String, comentario: String, usuario: Usuario): Sistema {
+        val p = protocoloOError(s, numero)
+        exigir(Reglas.puedeDefinirResultadoManual(p, usuario), "Solo el ingeniero o jefe técnico puede comentar")
+        return reemplazar(s, p.copy(comentarioIngeniero = comentario.trim()))
+    }
 }
