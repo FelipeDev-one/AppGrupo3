@@ -182,4 +182,59 @@ object Operaciones {
         val cerrada = visita.copy(recepcion = recepcion.copy(rut = RutValidator.formatear(recepcion.rut)))
         return s.copy(visitas = s.visitas.map { if (it.numero == visitaNumero) cerrada else it })
     }
+
+    fun guardarEquipo(s: Sistema, equipo: Equipo, usuario: Usuario, ignorarDuplicado: Boolean = false): Sistema {
+        exigir(Reglas.puedeRegistrarDatos(usuario), "Tu perfil no puede registrar equipos")
+        exigir(s.instalacion(equipo.instalacionId) != null, "La instalación no existe")
+        val duplicado = Reglas.tagDuplicado(s.equipos, equipo.instalacionId, equipo.tag, equipo.id)
+        if (duplicado != null && !ignorarDuplicado) throw TagDuplicadoException(duplicado)
+        val existe = s.equipos.any { it.id == equipo.id }
+        val lista = if (existe) s.equipos.map { if (it.id == equipo.id) equipo else it } else s.equipos + equipo
+        return s.copy(equipos = lista)
+    }
+
+    fun guardarCliente(s: Sistema, cliente: Cliente, usuario: Usuario, esNuevo: Boolean): Sistema {
+        exigir(Reglas.puedeRegistrarDatos(usuario), "Tu perfil no puede registrar clientes")
+        exigir(RutValidator.esValido(cliente.rut), "El RUT del cliente no es válido (RN-03)")
+        val rut = RutValidator.formatear(cliente.rut)
+        if (esNuevo) exigir(s.cliente(rut) == null, "Ya existe un cliente con el RUT $rut")
+        val final = cliente.copy(rut = rut)
+        val lista = if (esNuevo) s.clientes + final else s.clientes.map { if (it.rut == rut) final else it }
+        return s.copy(clientes = lista)
+    }
+
+    fun guardarInstalacion(s: Sistema, instalacion: Instalacion, usuario: Usuario): Sistema {
+        exigir(Reglas.puedeRegistrarDatos(usuario), "Tu perfil no puede registrar instalaciones")
+        exigir(s.cliente(instalacion.clienteRut) != null, "El cliente no existe")
+        val repetida = s.instalaciones.any {
+            it.clienteRut == instalacion.clienteRut && it.id != instalacion.id && it.nombre.equals(instalacion.nombre.trim(), ignoreCase = true)
+        }
+        exigir(!repetida, "El cliente ya tiene una instalación con ese nombre")
+        val existe = s.instalaciones.any { it.id == instalacion.id }
+        val lista = if (existe) s.instalaciones.map { if (it.id == instalacion.id) instalacion else it } else s.instalaciones + instalacion
+        return s.copy(instalaciones = lista)
+    }
+
+    fun guardarInstrumento(s: Sistema, instrumento: Instrumento, usuario: Usuario, esNuevo: Boolean): Sistema {
+        exigir(Reglas.puedeGestionarInstrumentos(usuario), "Solo el jefe técnico gestiona instrumentos (RN-12)")
+        exigir(!LocalDate.parse(instrumento.vencimiento).isBefore(LocalDate.parse(instrumento.calibracion)), "El vencimiento debe ser posterior a la calibración")
+        if (esNuevo) exigir(s.instrumento(instrumento.serie) == null, "Ya existe un instrumento con la serie ${instrumento.serie}")
+        val lista = if (esNuevo) s.instrumentos + instrumento else s.instrumentos.map { if (it.serie == instrumento.serie) instrumento else it }
+        return s.copy(instrumentos = lista)
+    }
+
+    fun guardarPersonal(s: Sistema, nuevo: Usuario, usuario: Usuario): Sistema {
+        exigir(Reglas.puedeGestionarPersonal(usuario), "Solo el jefe técnico gestiona el personal (RF-22)")
+        exigir(nuevo.perfil.esInterno, "El personal debe ser técnico, ingeniero o jefe técnico")
+        exigir(RutValidator.esValido(nuevo.rut), "El RUT no es válido (RN-03)")
+        val rut = RutValidator.formatear(nuevo.rut)
+        exigir(s.usuario(rut) == null, "Ya existe un usuario con el RUT $rut")
+        return s.copy(usuarios = s.usuarios + nuevo.copy(rut = rut))
+    }
+
+    fun cambiarActivo(s: Sistema, rut: String, activo: Boolean, usuario: Usuario): Sistema {
+        exigir(Reglas.puedeGestionarPersonal(usuario), "Solo el jefe técnico gestiona el personal (RF-22)")
+        exigir(rut != usuario.rut, "No puedes desactivar tu propia cuenta")
+        return s.copy(usuarios = s.usuarios.map { if (it.rut == rut) it.copy(activo = activo) else it })
+    }
 }
