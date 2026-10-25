@@ -135,3 +135,59 @@ fun InstrumentosScreen(
         }
     }
 }
+
+@Composable
+fun InstrumentoFormScreen(
+    serie: String?,
+    app: InduztekViewModel,
+    onVolver: () -> Unit,
+    viewModel: InstrumentoFormViewModel = viewModel()
+) {
+    val sistema by app.sistema.collectAsStateWithLifecycle()
+    val estado by viewModel.estado.collectAsStateWithLifecycle()
+    LaunchedEffect(serie) { viewModel.iniciar(sistema?.instrumento(serie)) }
+    val fecha = KeyboardOptions(keyboardType = KeyboardType.Number)
+
+    FormularioScaffold(stringResource(R.string.titulo_instrumento), if (estado.esNuevo) "Nuevo" else estado.serie, onVolver) {
+        CampoTexto(
+            valor = estado.serie,
+            onCambio = viewModel::onSerie,
+            etiqueta = "Número de serie",
+            icono = Icons.Filled.QrCode,
+            error = estado.errorSerie,
+            habilitado = estado.esNuevo
+        )
+        Selector(
+            etiqueta = "Tipo",
+            icono = Icons.Filled.Speed,
+            opciones = TipoInstrumento.entries.map { Opcion(it, it.etiqueta) },
+            seleccionado = estado.tipo,
+            onSeleccion = viewModel::onTipo,
+            error = estado.errorTipo
+        )
+        CampoTexto(estado.nombre, viewModel::onNombre, "Nombre", Icons.Filled.Label, estado.errorNombre, placeholder = "Megóhmetro 5 kV")
+        CampoTexto(estado.modelo, viewModel::onModelo, "Marca y modelo", Icons.Filled.Label, estado.errorModelo, placeholder = "Megger MIT525")
+        CampoTexto(
+            valor = estado.calibracion,
+            onCambio = viewModel::onCalibracion,
+            etiqueta = "Fecha de calibración",
+            icono = Icons.Filled.EventAvailable,
+            error = estado.errorCalibracion,
+            placeholder = "dd-mm-aaaa",
+            opcionesTeclado = fecha
+        )
+        CampoTexto(
+            valor = estado.vencimiento,
+            onCambio = viewModel::onVencimiento,
+            etiqueta = "Vencimiento de la calibración",
+            icono = Icons.Filled.EventBusy,
+            error = estado.errorVencimiento,
+            placeholder = "dd-mm-aaaa",
+            opcionesTeclado = fecha
+        )
+        Button(
+            onClick = { if (viewModel.validar()) app.guardarInstrumento(viewModel.construir(), estado.esNuevo, onVolver) },
+            modifier = Modifier.fillMaxWidth().height(Dimens.alturaBoton)
+        ) { Text(stringResource(R.string.btn_guardar)) }
+    }
+}
