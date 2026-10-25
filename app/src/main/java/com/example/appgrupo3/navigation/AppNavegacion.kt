@@ -212,6 +212,44 @@ fun AppNavegacion() {
                 val numero = e.texto("numero") ?: return@composable
                 ActaScreen(numero, app, volver)
             }
+            composable(Ruta.Clientes.ruta) {
+                ClientesScreen(
+                    app = app,
+                    onVolver = volver,
+                    onNuevoCliente = { navController.navigate(Ruta.ClienteForm.crear()) },
+                    onEditarCliente = { navController.navigate(Ruta.ClienteForm.crear(it)) },
+                    onInstalacion = { rut, id -> navController.navigate(Ruta.InstalacionForm.crear(rut, id)) },
+                    onNuevoEquipo = { navController.navigate(Ruta.EquipoForm.crear(it)) }
+                )
+            }
+            composable(
+                Ruta.ClienteForm.ruta,
+                listOf(navArgument("rut") { type = NavType.StringType; nullable = true; defaultValue = null })
+            ) { e -> ClienteFormScreen(e.texto("rut"), app, volver) }
+            composable(
+                Ruta.InstalacionForm.ruta,
+                listOf(
+                    navArgument("clienteRut") { type = NavType.StringType },
+                    navArgument("id") { type = NavType.StringType; nullable = true; defaultValue = null }
+                )
+            ) { e ->
+                val rut = e.texto("clienteRut") ?: return@composable
+                InstalacionFormScreen(rut, e.texto("id"), app, volver)
+            }
+            composable(Ruta.Instrumentos.ruta) {
+                InstrumentosScreen(app, volver, onEditar = { navController.navigate(Ruta.InstrumentoForm.crear(it)) })
+            }
+            composable(
+                Ruta.InstrumentoForm.ruta,
+                listOf(navArgument("serie") { type = NavType.StringType; nullable = true; defaultValue = null })
+            ) { e -> InstrumentoFormScreen(e.texto("serie"), app, volver) }
+            composable(Ruta.Personal.ruta) {
+                PersonalScreen(app, volver, onNuevo = { navController.navigate(Ruta.PersonalNuevo.ruta) })
+            }
+            composable(Ruta.PersonalNuevo.ruta) { PersonalNuevoScreen(app, volver) }
+            composable(Ruta.Indicadores.ruta) {
+                IndicadoresScreen(app, volver, onProtocolo = { navController.navigate(Ruta.Protocolo.crear(it)) })
+            }
         }
 
         MensajeFlotante(
