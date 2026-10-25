@@ -107,4 +107,96 @@ object Serializador {
             it.getString("modelo"), it.getString("calibracion"), it.getString("vencimiento")
         )
     }
+
+    fun visitasATexto(l: List<Visita>) = texto(l) { v ->
+        JSONObject().put("numero", v.numero).put("clienteRut", v.clienteRut).put("instalacionId", v.instalacionId)
+            .put("fecha", v.fecha).put("tipo", v.tipo.name).put("tecnicoRut", v.tecnicoRut).put("ingenieroRut", v.ingenieroRut)
+            .ponerNulo("recepcion", v.recepcion?.let {
+                JSONObject().put("nombre", it.nombre).put("rut", it.rut).put("cargo", it.cargo).put("fechaHora", it.fechaHora)
+            })
+    }
+
+    fun visitasDesde(t: String?) = lista(t) { o ->
+        Visita(
+            numero = o.getString("numero"),
+            clienteRut = o.getString("clienteRut"),
+            instalacionId = o.getString("instalacionId"),
+            fecha = o.getString("fecha"),
+            tipo = TipoVisita.valueOf(o.getString("tipo")),
+            tecnicoRut = o.getString("tecnicoRut"),
+            ingenieroRut = o.getString("ingenieroRut"),
+            recepcion = o.optJSONObject("recepcion")?.let {
+                Recepcion(it.getString("nombre"), it.getString("rut"), it.getString("cargo"), it.getLong("fechaHora"))
+            }
+        )
+    }
+
+    private fun pruebaAJson(p: Prueba): JSONObject = JSONObject()
+        .put("tipo", p.tipo.name).put("realizada", p.realizada).put("motivoNoRealizada", p.motivoNoRealizada)
+        .ponerNulo("instrumentoSerie", p.instrumentoSerie).ponerNulo("tensionKv", p.tensionKv).put("unidad", p.unidad.name)
+        .put("valores", mapaATexto(p.valores)).put("noOpera", p.noOpera)
+        .ponerNulo("resultadoManual", p.resultadoManual?.name)
+        .ponerNulo("valoresPrevios", p.valoresPrevios?.let { mapaATexto(it) })
+        .ponerNulo("resultadoPrevio", p.resultadoPrevio?.name)
+
+    private fun pruebaDesde(o: JSONObject): Prueba = Prueba(
+        tipo = TipoPrueba.valueOf(o.getString("tipo")),
+        realizada = o.optBoolean("realizada", true),
+        motivoNoRealizada = o.optString("motivoNoRealizada"),
+        instrumentoSerie = o.textoONulo("instrumentoSerie"),
+        tensionKv = o.numeroONulo("tensionKv"),
+        unidad = UnidadAislacion.valueOf(o.optString("unidad", UnidadAislacion.MEGA.name)),
+        valores = mapaDesde(o.optJSONObject("valores")),
+        noOpera = o.optBoolean("noOpera"),
+        resultadoManual = o.textoONulo("resultadoManual")?.let { Resultado.valueOf(it) },
+        valoresPrevios = o.optJSONObject("valoresPrevios")?.let { mapaDesde(it) },
+        resultadoPrevio = o.textoONulo("resultadoPrevio")?.let { Resultado.valueOf(it) }
+    )
+
+    private fun cambioAJson(c: CambioEstado): JSONObject = JSONObject()
+        .ponerNulo("desde", c.desde?.name).put("hacia", c.hacia.name).put("rut", c.rut).put("fechaHora", c.fechaHora).put("motivo", c.motivo)
+
+    private fun cambioDesde(o: JSONObject): CambioEstado = CambioEstado(
+        o.textoONulo("desde")?.let { EstadoProtocolo.valueOf(it) },
+        EstadoProtocolo.valueOf(o.getString("hacia")),
+        o.getString("rut"),
+        o.getLong("fechaHora"),
+        o.optString("motivo")
+    )
+
+    fun protocolosATexto(l: List<Protocolo>) = texto(l) { p ->
+        JSONObject().put("numero", p.numero).ponerNulo("visitaNumero", p.visitaNumero).put("equipoId", p.equipoId)
+            .put("fechaHora", p.fechaHora).put("tecnicoRut", p.tecnicoRut)
+            .ponerNulo("temperatura", p.temperatura).ponerNulo("humedad", p.humedad)
+            .put("pruebas", JSONArray().apply { p.pruebas.forEach { put(pruebaAJson(it)) } })
+            .put("estado", p.estado.name).put("observaciones", p.observaciones).put("mantenimiento", p.mantenimiento)
+            .put("motivoObservacion", p.motivoObservacion).put("motivoAnulacion", p.motivoAnulacion)
+            .put("comentarioIngeniero", p.comentarioIngeniero)
+            .ponerNulo("reemplazaA", p.reemplazaA).ponerNulo("reemplazadoPor", p.reemplazadoPor)
+            .put("historial", JSONArray().apply { p.historial.forEach { put(cambioAJson(it)) } })
+    }
+
+    fun protocolosDesde(t: String?) = lista(t) { o ->
+        val pruebas = o.getJSONArray("pruebas")
+        val historial = o.optJSONArray("historial") ?: JSONArray()
+        Protocolo(
+            numero = o.getString("numero"),
+            visitaNumero = o.textoONulo("visitaNumero"),
+            equipoId = o.getString("equipoId"),
+            fechaHora = o.getLong("fechaHora"),
+            tecnicoRut = o.getString("tecnicoRut"),
+            temperatura = o.numeroONulo("temperatura"),
+            humedad = o.numeroONulo("humedad"),
+            pruebas = (0 until pruebas.length()).map { pruebaDesde(pruebas.getJSONObject(it)) },
+            estado = EstadoProtocolo.valueOf(o.getString("estado")),
+            observaciones = o.optString("observaciones"),
+            mantenimiento = o.optString("mantenimiento"),
+            motivoObservacion = o.optString("motivoObservacion"),
+            motivoAnulacion = o.optString("motivoAnulacion"),
+            comentarioIngeniero = o.optString("comentarioIngeniero"),
+            reemplazaA = o.textoONulo("reemplazaA"),
+            reemplazadoPor = o.textoONulo("reemplazadoPor"),
+            historial = (0 until historial.length()).map { cambioDesde(historial.getJSONObject(it)) }
+        )
+    }
 }
