@@ -14,6 +14,7 @@ data class ParAislacion(val nombre: String, val claveUnMinuto: String, val clave
 object Catalogo {
     private val devanados = listOf("AT-BT", "AT-T", "BT-T")
     private val fases = listOf("R", "S", "T")
+    val fasesTtr = listOf("H1-X1", "H2-X2", "H3-X3")
 
     fun pruebasDe(tipo: TipoEquipo): List<TipoPrueba> = when (tipo) {
         TipoEquipo.TRANSFORMADOR -> listOf(TipoPrueba.AISLACION, TipoPrueba.TTR, TipoPrueba.DEVANADOS)
@@ -35,12 +36,12 @@ object Catalogo {
                 par.claveDiezMinutos?.let { Campo(it, "${par.nombre} · 10 min", "MΩ", principal = false, esAislacion = true) }
             )
         }
-        TipoPrueba.TTR -> listOf(
-            Campo("teorica", "Relación teórica", ""),
-            Campo("medida", "Relación medida", ""),
+        TipoPrueba.TTR -> listOf(Campo("teorica", "Relación teórica", "", principal = false)) +
+            fasesTtr.map { Campo(it, "Relación medida $it", "") } +
             Campo("tap", "Posición del cambiador", "", principal = false)
-        )
-        TipoPrueba.DEVANADOS -> fases.map { Campo(it, "Fase $it", "mΩ") }
+        TipoPrueba.DEVANADOS -> listOf("AT", "BT").flatMap { lado ->
+            fases.map { Campo("${lado}_$it", "$lado · Fase $it", "mΩ") }
+        }
         TipoPrueba.CONTACTOS -> (1..3).map { Campo("P$it", "Polo $it", "µΩ") }
         TipoPrueba.OPERACION_RELE -> listOf(
             Campo("ajuste", "Ajuste de corriente", "A", principal = false),

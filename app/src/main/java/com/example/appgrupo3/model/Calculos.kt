@@ -34,6 +34,13 @@ object Calculos {
 
     fun errorTtr(teorica: Double, medida: Double): Double = abs(medida - teorica) / teorica * 100
 
+    fun errorTtrMaximo(valores: Map<String, Double>): Double? {
+        val teorica = valores["teorica"] ?: return null
+        if (teorica <= 0) return null
+        val medidas = Catalogo.fasesTtr.map { valores[it] ?: return null }
+        return medidas.maxOf { errorTtr(teorica, it) }
+    }
+
     fun clasificarErrorTtr(error: Double): Resultado = when {
         error <= 0.5 -> Resultado.APROBADO
         error <= 1.0 -> Resultado.OBSERVADO
@@ -88,12 +95,7 @@ object Calculos {
         equipo: Equipo
     ): Resultado? = when (tipo) {
         TipoPrueba.AISLACION -> resultadoAislacion(valores, equipo.tipo)
-        TipoPrueba.TTR -> {
-            val teorica = valores["teorica"]
-            val medida = valores["medida"]
-            if (teorica == null || medida == null || teorica <= 0) null
-            else clasificarErrorTtr(errorTtr(teorica, medida))
-        }
+        TipoPrueba.TTR -> errorTtrMaximo(valores)?.let { clasificarErrorTtr(it) }
         TipoPrueba.DEVANADOS -> manual
         TipoPrueba.CONTACTOS -> {
             val maximo = equipo.contactoMaximo
@@ -134,11 +136,7 @@ object Calculos {
                 if (diez == null) "${par.nombre}: ${Formato.numero(uno)} MΩ a 1 min"
                 else "${par.nombre}: IP ${Formato.numero(indicePolarizacion(uno, diez), 2)}"
             }
-            TipoPrueba.TTR -> {
-                val t = v["teorica"]
-                val m = v["medida"]
-                if (t != null && m != null && t > 0) listOf("Error ${Formato.numero(errorTtr(t, m), 2)} %") else emptyList()
-            }
+            TipoPrueba.TTR -> errorTtrMaximo(v)?.let { listOf("Error máximo ${Formato.numero(it, 2)} %") } ?: emptyList()
             TipoPrueba.CONTACTOS -> {
                 val maximo = equipo.contactoMaximo
                 val polos = (1..3).mapNotNull { v["P$it"] }
