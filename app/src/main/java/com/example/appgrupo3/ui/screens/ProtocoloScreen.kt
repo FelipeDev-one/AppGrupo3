@@ -426,3 +426,69 @@ private fun ResultadoManual(actual: Resultado?, onElegir: (Resultado) -> Unit) {
         }
     }
 }
+
+@Composable
+private fun Comparacion(comparacion: List<ComparacionPrueba>, anterior: Protocolo?) {
+    SeccionTarjeta("Comparación con la prueba anterior", Icons.Filled.CompareArrows) {
+        if (anterior == null || comparacion.isEmpty()) {
+            Text("Sin historial previo para comparar.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            return@SeccionTarjeta
+        }
+        Text(
+            "Protocolo ${anterior.numero} del ${Tiempo.fecha(anterior.fechaHora)}",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        comparacion.forEach { c ->
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(c.tipo.etiqueta, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                if (c.significativa) Etiqueta("Variación significativa", Tono.OBSERVADO, Icons.Filled.Warning)
+            }
+            c.variaciones.forEach { v ->
+                val tono = if (v.significativa) Tono.OBSERVADO else Tono.NEUTRO
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(v.campo.etiqueta, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                    Text(
+                        "${Formato.numero(v.anterior)} → ${Formato.numero(v.actual)} ${v.campo.unidad}  ",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Etiqueta(Formato.porcentaje(v.porcentaje), tono)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ComentarioIngeniero(
+    p: Protocolo,
+    u: Usuario,
+    comentario: String,
+    error: String?,
+    requerido: Boolean,
+    onCambio: (String) -> Unit,
+    onGuardar: () -> Unit
+) {
+    val puede = Reglas.puedeDefinirResultadoManual(p, u)
+    if (!puede && p.comentarioIngeniero.isBlank()) return
+    SeccionTarjeta("Comentario del ingeniero", Icons.Filled.Comment) {
+        if (puede) {
+            if (requerido) Text("Obligatorio antes de formalizar por variación significativa (RN-09).", color = MaterialTheme.colorScheme.error)
+            CampoTexto(
+                valor = comentario,
+                onCambio = onCambio,
+                etiqueta = "Interpretación de resultados",
+                icono = Icons.Filled.Comment,
+                error = error,
+                ayuda = "${comentario.length}/300",
+                unaLinea = false,
+                lineasMinimas = 2
+            )
+            FilledTonalButton(onClick = onGuardar, enabled = comentario != p.comentarioIngeniero, modifier = Modifier.fillMaxWidth()) {
+                Text("Guardar comentario")
+            }
+        } else {
+            Text(p.comentarioIngeniero)
+        }
+    }
+}
