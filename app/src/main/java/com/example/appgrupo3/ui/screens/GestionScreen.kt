@@ -45,6 +45,9 @@ import com.example.appgrupo3.ui.components.SeccionTarjeta
 import com.example.appgrupo3.ui.theme.Dimens
 import com.example.appgrupo3.viewmodel.InduztekViewModel
 
+// true = muestra el botón "Restaurar datos de ejemplo" a la jefatura (solo para demostraciones).
+private const val MOSTRAR_RESTAURAR_DATOS = false
+
 @Composable
 fun GestionScreen(navController: NavController, app: InduztekViewModel) {
     val sistema by app.sistema.collectAsStateWithLifecycle()
@@ -111,7 +114,7 @@ fun GestionScreen(navController: NavController, app: InduztekViewModel) {
                     Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null)
                     Text("  " + stringResource(R.string.btn_cerrar_sesion))
                 }
-                if (u.perfil == Perfil.JEFE) {
+                if (MOSTRAR_RESTAURAR_DATOS && u.perfil == Perfil.JEFE) {
                     OutlinedButton(onClick = { confirmarRestaurar = true }, modifier = Modifier.fillMaxWidth()) {
                         Icon(Icons.Filled.RestartAlt, contentDescription = null)
                         Text("  Restaurar datos de ejemplo")
