@@ -158,4 +158,23 @@ object Calculos {
             TipoPrueba.DEVANADOS -> if (prueba.resultadoManual == null) listOf("Resultado pendiente del ingeniero (RN-08c)") else emptyList()
         }
     }
+
+    fun global(protocolo: Protocolo, equipo: Equipo): Resultado? =
+        peor(protocolo.pruebas.mapNotNull { resultado(it, equipo) })
+
+    fun comparar(actual: Protocolo, anterior: Protocolo?, equipo: Equipo): List<ComparacionPrueba> {
+        if (anterior == null) return emptyList()
+        return actual.pruebas.mapNotNull { prueba ->
+            val previa = anterior.prueba(prueba.tipo) ?: return@mapNotNull null
+            if (!prueba.realizada || !previa.realizada) return@mapNotNull null
+            val variaciones = Catalogo.campos(prueba.tipo, equipo.tipo)
+                .filter { it.principal }
+                .mapNotNull { campo ->
+                    val a = previa.valores[campo.clave]
+                    val b = prueba.valores[campo.clave]
+                    if (a == null || b == null) null else Variacion(campo, a, b)
+                }
+            if (variaciones.isEmpty()) null else ComparacionPrueba(prueba.tipo, anterior.numero, variaciones)
+        }
+    }
 }
