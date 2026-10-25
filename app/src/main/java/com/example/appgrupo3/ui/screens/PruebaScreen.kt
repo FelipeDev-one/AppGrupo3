@@ -43,6 +43,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
@@ -89,7 +90,7 @@ fun PruebaScreen(
 
     val fechaPrueba = Tiempo.aFecha(p.fechaHora)
     val conMantenimiento = s.visita(p.visitaNumero)?.tipo == TipoVisita.PRUEBAS_Y_MANTENIMIENTO
-    val vista = viewModel.construir(equipo)
+    val vista = remember(estado) { viewModel.construir(equipo) }
     val resultado = Calculos.resultado(vista, equipo)
     val campos = Catalogo.campos(tipo, equipo.tipo)
     val instrumentos = s.instrumentos.filter { tipo in it.tipo.pruebas }
