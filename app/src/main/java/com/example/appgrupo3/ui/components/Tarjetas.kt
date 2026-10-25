@@ -110,3 +110,104 @@ fun EstadoVacio(icono: ImageVector, texto: String, modifier: Modifier = Modifier
         Text(texto, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyLarge)
     }
 }
+
+@Composable
+fun TarjetaProtocolo(
+    protocolo: Protocolo,
+    equipo: Equipo?,
+    subtitulo: String,
+    resultado: Resultado?,
+    atrasado: Boolean,
+    paraCliente: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+    ) {
+        Column(Modifier.padding(Dimens.espacioMedio), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        "${equipo?.tag ?: "Equipo"} · ${equipo?.tipo?.etiqueta ?: ""}",
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        "${protocolo.numero} · ${Tiempo.fecha(protocolo.fechaHora)}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                EtiquetaResultado(resultado, textoVacio = "Sin resultado")
+            }
+            Text(subtitulo, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Row(horizontalArrangement = Arrangement.spacedBy(Dimens.espacioChico), verticalAlignment = Alignment.CenterVertically) {
+                EtiquetaEstado(protocolo.estado, paraCliente)
+                if (atrasado && !paraCliente) Etiqueta("Atrasado", Tono.RECHAZADO, Icons.Filled.Schedule)
+                if (protocolo.reemplazadoPor != null) Etiqueta("Reemplazado", Tono.NEUTRO, Icons.Filled.SwapHoriz)
+            }
+        }
+    }
+}
+
+@Composable
+fun DialogoMotivo(
+    titulo: String,
+    descripcion: String,
+    textoConfirmar: String,
+    onConfirmar: (String) -> Unit,
+    onCancelar: () -> Unit
+) {
+    var motivo by rememberSaveable { mutableStateOf("") }
+    var error by rememberSaveable { mutableStateOf<String?>(null) }
+    AlertDialog(
+        onDismissRequest = onCancelar,
+        title = { Text(titulo) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(Dimens.espacioChico)) {
+                Text(descripcion)
+                CampoTexto(
+                    valor = motivo,
+                    onCambio = {
+                        motivo = it.take(200)
+                        error = null
+                    },
+                    etiqueta = "Motivo",
+                    icono = Icons.Filled.Edit,
+                    error = error,
+                    ayuda = "${motivo.length}/200",
+                    unaLinea = false,
+                    lineasMinimas = 2
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                val limpio = motivo.trim()
+                if (limpio.length < 5) error = "El motivo es obligatorio (mínimo 5 caracteres)" else onConfirmar(limpio)
+            }) { Text(textoConfirmar) }
+        },
+        dismissButton = { TextButton(onClick = onCancelar) { Text(stringResource(R.string.btn_cancelar)) } }
+    )
+}
+
+@Composable
+fun DialogoConfirmar(
+    titulo: String,
+    texto: String,
+    textoConfirmar: String,
+    onConfirmar: () -> Unit,
+    onCancelar: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onCancelar,
+        title = { Text(titulo) },
+        text = { Text(texto) },
+        confirmButton = { TextButton(onClick = onConfirmar) { Text(textoConfirmar) } },
+        dismissButton = { TextButton(onClick = onCancelar) { Text(stringResource(R.string.btn_cancelar)) } }
+    )
+}
