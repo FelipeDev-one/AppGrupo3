@@ -227,4 +227,24 @@ fun EquipoFormScreen(
             }
         }
     }
+
+    estado.duplicado?.let { existente ->
+        AlertDialog(
+            onDismissRequest = { viewModel.onDuplicado(null) },
+            title = { Text("TAG ya registrado (RN-01)") },
+            text = {
+                Text(
+                    "En ${instalacion?.nombre} ya existe ${existente.tag}: ${existente.tipo.etiqueta} ${existente.marca}, serie ${existente.serie}. " +
+                        "¿Es el mismo equipo?"
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.onDuplicado(null)
+                    if (visitaNumero != null) app.agregarProtocolo(visitaNumero, existente.id) { onProtocolo(it.numero) } else onVolver()
+                }) { Text(if (visitaNumero != null) "Usar el existente" else "Volver") }
+            },
+            dismissButton = { TextButton(onClick = { viewModel.onDuplicado(null) }) { Text("Corregir TAG") } }
+        )
+    }
 }
